@@ -98,3 +98,15 @@ def test_python_and_typescript_in_one_repo_do_not_collide(tmp_path):
     a = graph.analyze_architecture(tmp_path)
     assert a["python_modules"] == 3 and a["js_modules"] == 2
     assert {i["module"] for i in a["third_party_imports"]} == {"numpy", "react"}
+
+
+def test_js_packages_produce_capability_tags_when_there_is_no_manifest(tmp_path):
+    from repolens import profile, stack
+    from tests.test_analyzers import sh
+    sh(tmp_path, "init", "-q")
+    write(tmp_path, "src/index.ts", "import { chromium } from 'playwright'\nimport z from 'zod'\nimport { openai } from '@ai-sdk/openai'\n" + "export const a = 1\n" * 15)
+    sh(tmp_path, "add", "-A")
+    sh(tmp_path, "commit", "-qm", "x")
+    p = profile.analyze(str(tmp_path))
+    assert {"browser-automation", "data-validation", "llm-api"} <= set(p["stack"]["capability_tags"])
+    assert stack.tags_for_imports([{"module": "@ai-sdk/openai", "name": "@ai-sdk/openai", "files": 1}]) == ["llm-api"]

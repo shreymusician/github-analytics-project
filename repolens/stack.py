@@ -46,6 +46,12 @@ TAXONOMY: dict[str, list[str]] = {
     "diffusers": ["generative-ai"], "gym": ["reinforcement-learning"], "gymnasium": ["reinforcement-learning"],
     "stable-baselines3": ["reinforcement-learning"], "spacy": ["nlp"], "nltk": ["nlp"],
     "onnxruntime": ["inference"], "tensorrt": ["inference"], "vllm": ["inference", "llm-serving"],
+    "zod": ["data-validation"], "playwright": ["browser-automation"], "puppeteer": ["browser-automation"],
+    "ai": ["llm-orchestration"], "@ai-sdk/openai": ["llm-api"], "@ai-sdk/anthropic": ["llm-api"],
+    "@anthropic-ai/sdk": ["llm-api"], "langchain": ["llm-orchestration"], "@langchain/core": ["llm-orchestration"],
+    "typescript": ["typescript"], "vite": ["frontend"], "tailwindcss": ["frontend"], "prisma": ["database"],
+    "mongoose": ["database"], "pg": ["database"], "axios": ["http-client"], "node-fetch": ["http-client"],
+    "vitest": ["testing"], "mocha": ["testing"], "cheerio": ["scraping"],
 }
 
 _REQ = re.compile(r"^\s*([A-Za-z0-9_.\-]+)\s*(?:\[[^\]]*\])?\s*(==|>=|<=|~=|>|<|!=)?\s*([^\s;#]*)")
