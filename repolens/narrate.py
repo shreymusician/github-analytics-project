@@ -90,6 +90,7 @@ def _parse(text: str) -> dict | None:
     return data if isinstance(data, dict) else None
 
 
+_CITE_TOKEN = re.compile(r"\[?\bE\d+\b\]?")                                    # E38, [E38]
 _NUM = re.compile(r"\d[\d,]*(?:\.\d+)?")
 _MIXED = re.compile(r"\b(?=[A-Za-z0-9]*[a-z][A-Z])[A-Za-z0-9]+\b")          # NumPy, FastAPI, PyTorch
 _FILE = re.compile(r"[\w\-./]+\.(?:py|js|jsx|ts|tsx|go|rs|java|md|json|ya?ml|toml|txt|cfg|ini|ipynb|sh|ipynb|pptx|pdf)\b", re.I)
@@ -112,6 +113,7 @@ def ungrounded(text: str, cited_text: str, names: set[str]) -> list[str]:
     analyzers actually found in this repo. A hallucinated plain-word library (e.g. "Django") is only caught
     if it is mixed-case; that limitation is accepted for now.
     """
+    text = _CITE_TOKEN.sub(" ", text)          # models sometimes write "(E38, E41)" inline: that is a citation, not a claim
     ev, ev_n = cited_text.lower().replace(",", ""), _norm(cited_text)
     ev_nums = [float(x) for x in re.findall(r"\d+(?:\.\d+)?", ev)]
     bad = []

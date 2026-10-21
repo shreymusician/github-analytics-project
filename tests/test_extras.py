@@ -189,3 +189,13 @@ def test_rounded_numbers_are_accepted_but_invented_ones_are_not():
     assert ungrounded("Exactly 1523 commits.", ev, set()) == ["1523"]    # non-round numbers must match exactly
     assert ungrounded("It has 95 test files.", ev, set()) == ["95"]       # near but not round: still checked
     assert ungrounded("Renders 1080, 1920 frames.", "1920 by 1080", set()) == []   # trailing punctuation ignored
+
+
+def test_inline_evidence_ids_are_not_treated_as_claims():
+    """Real failure (image-super-resolution): the model wrote '(E38, E41)' in its prose, grounding saw the numbers
+    38 and 41 as invented, and an entire report's narration was dropped."""
+    ev = "History: 127 commits, archived."
+    assert ungrounded("An archived project with 127 commits (E38, E41).", ev, set()) == []
+    assert ungrounded("An archived project [E38] [E41] with 127 commits.", ev, set()) == []
+    assert ungrounded("It has 4100 contributors (E41).", ev, set()) == ["4100"]      # real numbers are still checked
+    assert ungrounded("See file E2E.py.", "E2E.py", set()) == []                     # E2E is not a citation token
