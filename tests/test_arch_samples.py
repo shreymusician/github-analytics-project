@@ -67,3 +67,15 @@ def test_missing_or_nonexistent_hotspots_are_ignored(tmp_path):
     st = {"path_index": ["a.py"], "notable_files": ["a.py"]}
     got = profile.pick_arch_files(tmp_path, st, {"read_first": []}, {"hotspots": [{"file": "deleted_long_ago.py", "changes": 99}]})
     assert got == ["a.py"]
+
+
+def test_generic_catch_all_files_are_picked_last(tmp_path):
+    write(tmp_path, "pkg/utils.py", "def u():\n    pass\n" * 200)               # biggest file in the directory
+    write(tmp_path, "pkg/parser.py", "def p():\n    pass\n" * 20)
+    write(tmp_path, "pkg/common.py", "x = 1\n" * 300)
+    files = ["pkg/utils.py", "pkg/parser.py", "pkg/common.py"]
+    st = {"path_index": files, "notable_files": files}
+    got = profile.pick_arch_files(tmp_path, st, {"read_first": [{"file": "pkg/utils.py"}, {"file": "pkg/parser.py"}]})
+    assert got[0] == "pkg/parser.py"                                                # a graph pick that is generic is skipped first
+    assert got.index("pkg/parser.py") < got.index("pkg/utils.py") and got.index("pkg/parser.py") < got.index("pkg/common.py")
+    assert set(got) == set(files)                                                   # still shown if there is room

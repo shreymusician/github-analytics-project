@@ -53,8 +53,9 @@ def pick_arch_files(root: Path, st: dict, arch: dict, hist: dict | None = None, 
         if rel not in chosen and (root / rel).is_file():
             chosen.append(rel)
 
-    for r in arch.get("read_first", [])[:3]:
-        take(r["file"])
+    graph_picks = [r["file"] for r in arch.get("read_first", []) if Path(r["file"]).stem.lower() not in graph.GENERIC_STEMS]
+    for rel in graph_picks[:3]:
+        take(rel)
     hot = [h["file"] for h in (hist or {}).get("hotspots", []) if _is_source(h["file"])]
     for rel in hot[:2]:
         take(rel)
@@ -69,11 +70,13 @@ def pick_arch_files(root: Path, st: dict, arch: dict, hist: dict | None = None, 
             break
         if d not in covered:
             # inside a directory: an entry-like file if there is one, otherwise the biggest
-            take(min(files, key=lambda sf: (0 if Path(sf[1]).stem.lower() in _ENTRY_STEMS else 1, -sf[0], sf[1]))[1])
+            take(min(files, key=lambda sf: (0 if Path(sf[1]).stem.lower() in _ENTRY_STEMS else 1,
+                                          1 if Path(sf[1]).stem.lower() in graph.GENERIC_STEMS else 0, -sf[0], sf[1]))[1])
             covered.add(d)
 
     def rank(p: str):
-        return (0 if Path(p).stem.lower() in _ENTRY_STEMS else 1, p.count("/"), -_size(root, p), p)
+        return (0 if Path(p).stem.lower() in _ENTRY_STEMS else 1, 1 if Path(p).stem.lower() in graph.GENERIC_STEMS else 0,
+                p.count("/"), -_size(root, p), p)
     for p in sorted((p for p in sources if p not in chosen), key=rank):
         if len(chosen) >= n:
             break
