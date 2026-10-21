@@ -2,7 +2,7 @@
 
 Last updated: 2026-10-21 (V1: code complete, awaiting human Gate A review)
 
-## Built and tested (69 tests passing)
+## Built and tested (82 tests passing)
 
 | Component | File | Notes |
 |---|---|---|
@@ -22,6 +22,8 @@ Last updated: 2026-10-21 (V1: code complete, awaiting human Gate A review)
 | Third-party import detection | `repolens/graph.py` | Works without any manifest; alias map (PIL -> Pillow); import-derived capability tags |
 | External signals (fail-soft) | `repolens/external.py` | GitHub facts (+ ecosyste.ms fallback), OpenSSF Scorecard, repo search and manifest deps (V3 helpers). Live-tested; `--offline` skips |
 | Citation grounding | `repolens/narrate.py` | Names/files/numbers must exist in the packet; wrong citations repaired, unsupported statements dropped with reasons (D13) |
+| Fact-check vs GitHub | `repolens/factcheck.py`, `scripts/fact_check.py` | Independent file-list / commit-date checks; 78 of 80 facts agree on the Gate A repos |
+| Second-model audit | `repolens/audit.py`, `scripts/audit_gate_a.py`, `scripts/audit_selftest.py` | A different model judges every claim; 102 of 103 supported; planted-falsehood control 3/3 |
 | Labels store | `repolens/labels.py`, `scripts/make_labels.py`, `data/labels/gate_a.csv` | Human review scores beside machine scores; refreshing never overwrites human cells |
 | Timing breakdown | `repolens/profile.py` (`timings`), CLI stderr | fetch / analysis (per analyzer) / external / narration / total |
 | Provider smoke test | `repolens/llm/smoke.py` | `python -m repolens.llm.smoke` (needs keys; **not yet run**) |
@@ -55,6 +57,10 @@ The first run exposed nine defects that 42 synthetic tests had not (asset-skewed
 
 Regenerating the reports surfaced four more bugs, all fixed with tests: inline evidence IDs read as invented numbers (wiped one repo's narration), 503 benching a provider for 60 s, a degraded narration getting cached, and real files rejected as reading suggestions.
 
+Automatic verification added afterwards (see docs/GATE_A.md): facts cross-checked against GitHub (78/80), every claim audited by a second model (102/103 supported, judge verified with planted falsehoods), and a first DeepWiki comparison (docs/DEEPWIKI_COMPARISON.md). The audit changed the product once: it showed the narrator was guessing each repo's audience, so the prompt now forbids that.
+
+Main finding of the DeepWiki comparison: DeepWiki explains what code does far better than we do (including TypeScript); our edge is the assessment layer (maintenance, tests/CI, deployability, risk). Weak spots now known: read-first lists, non-Python repos, shallow explanation.
+
 Still unverified: whether a human finds the reports insightful and accurate. That is the actual Gate A question.
 
 ## Model-name rot (real example)
@@ -70,6 +76,7 @@ Still unverified: whether a human finds the reports insightful and accurate. Tha
 - Path index is capped at 4,000 paths per profile; very large repos are indexed partially.
 - The import graph and stub/TODO checks cover Python only; notebook-heavy and non-Python repos get "partial" analysis and no read-first list.
 - Maturity labels come from the model and can disagree with the numeric scores.
+- Gemini free-tier model health changes by the hour: the default is now gemini-3.5-flash-lite because gemini-3.1-flash-lite returned 503 for audit-sized requests.
 - Groq free tier: 8,000 tokens per minute is the binding limit for batch runs, not the daily cap.
 - Scoring weights are first guesses. Need calibration on about 30 hand-labeled repos.
 - Import graph is Python only; no JS/TS/Go.
