@@ -13,7 +13,7 @@ import json
 from collections import Counter
 
 from .evidence import packet_text
-from .llm.router import AllProvidersFailed
+from .llm.router import AllProvidersFailed, LLMRouter
 from .narrate import _parse, ask_with_patience
 
 VERDICTS = ("supported", "partly", "unsupported", "contradicted")
@@ -50,6 +50,15 @@ def claims_of(narrative: dict) -> list[dict]:
     return out
 
 
+def _solo_router(router, provider: str):
+    """A router restricted to one provider (same key and HTTP client), or None if we cannot build one."""
+    keys = getattr(router, "keys", None)
+    if not isinstance(keys, dict) or provider not in keys:
+        return None
+    return LLMRouter(keys={provider: keys[provider]}, order=[provider], client=getattr(router, "client", None),
+                     timeout=getattr(router, "timeout", 60.0))
+
+
 def audit(packet: dict, narration: dict, router, max_wait: float = 45.0, sleep=None) -> dict | None:
     """Judge every claim of `narration` (the dict returned by narrate()). None if no provider answered."""
     claims = claims_of(narration["narrative"])
@@ -66,9 +75,21 @@ def audit(packet: dict, narration: dict, router, max_wait: float = 45.0, sleep=N
         kw["prefer"] = prefer
     if sleep is not None:
         kw["sleep"] = sleep
+    text = judge = None
     try:
         text, judge = ask_with_patience(router, messages, max_wait, **kw)
     except AllProvidersFailed:
+        pass
+    if (text is None or judge == narrator) and prefer:
+        # The router falls back silently when the preferred judge is rate-limited, which leaves the narrator
+        # grading its own work. Retry once with ONLY the other provider, waiting for its limit if needed.
+        solo = _solo_router(router, prefer)
+        if solo is not None:
+            try:
+                text, judge = ask_with_patience(solo, messages, max_wait, **{k: v for k, v in kw.items() if k != "prefer"})
+            except AllProvidersFailed:
+                pass
+    if text is None:
         return None
     data = _parse(text)
     if not isinstance(data, dict) or not isinstance(data.get("verdicts"), list):

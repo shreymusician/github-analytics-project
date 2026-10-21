@@ -90,3 +90,42 @@ def test_how_it_works_statements_and_components_are_audited_too(repo):
     claims = {c["id"]: c["text"] for c in audit.claims_of(nar["narrative"])}
     assert claims["how_it_works.0"] == "core() returns a constant."
     assert claims["components.0"] == "core (app/core.py): holds core()"
+
+
+def test_a_self_graded_audit_is_retried_with_the_other_provider(repo):
+    """If the preferred judge is down, the router falls back to the narrator; the audit must retry once with only the
+    other provider instead of quietly accepting a model grading its own work."""
+    import httpx
+    from repolens.llm.router import LLMRouter
+    pk, nar = setup(repo)                                    # narrator: groq
+    verdicts = json.dumps({"verdicts": [{"id": c["id"], "verdict": "supported", "reason": "ok"}
+                                        for c in audit.claims_of(nar["narrative"])]})
+    body = {"choices": [{"message": {"content": verdicts}}]}
+    calls = {"gemini": 0, "groq": 0}
+
+    def handler(req):
+        who = "gemini" if "googleapis" in req.url.host else "groq"
+        calls[who] += 1
+        if who == "gemini" and calls["gemini"] == 1:
+            return httpx.Response(503)                       # first Gemini call: overloaded
+        return httpx.Response(200, json=body)
+
+    router = LLMRouter(keys={"groq": "k1", "gemini": "k2"}, client=httpx.Client(transport=httpx.MockTransport(handler)))
+    out = audit.audit(pk, nar, router, sleep=lambda s: None)
+    assert out["judge"] == "gemini" and out["independent"] is True
+    assert calls == {"gemini": 2, "groq": 1}                 # gemini failed, groq answered (self-graded), gemini retried alone
+
+
+def test_if_no_other_provider_ever_answers_the_self_graded_result_is_kept_and_flagged(repo):
+    import httpx
+    from repolens.llm.router import LLMRouter
+    pk, nar = setup(repo)
+    verdicts = json.dumps({"verdicts": [{"id": c["id"], "verdict": "supported", "reason": "ok"}
+                                        for c in audit.claims_of(nar["narrative"])]})
+
+    def handler(req):
+        return httpx.Response(503) if "googleapis" in req.url.host else httpx.Response(200, json={"choices": [{"message": {"content": verdicts}}]})
+
+    router = LLMRouter(keys={"groq": "k1", "gemini": "k2"}, client=httpx.Client(transport=httpx.MockTransport(handler)))
+    out = audit.audit(pk, nar, router, sleep=lambda s: None)
+    assert out["judge"] == "groq" and out["independent"] is False        # honest: still reported, but flagged
