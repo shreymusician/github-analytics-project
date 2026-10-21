@@ -10,6 +10,10 @@ from .files import read_text
 from .redact import redact
 from .storage import Store
 
+# Bump when analyzer output or the narration prompt changes: cached artifacts from older versions are ignored.
+ANALYZER_VERSION = 3
+K_ANALYSIS, K_NARRATIVE = f"analysis.v{ANALYZER_VERSION}", f"narrative.v{ANALYZER_VERSION}"
+
 README_CHARS, EXCERPT_CHARS, EXCERPT_LINES, EXCERPTS = 1500, 1200, 60, 3
 
 
@@ -61,7 +65,7 @@ def run(source: str, store: Store | None = None, router=None, now: float | None 
     sha = _head_sha(root)
     cache = {"analysis": "n/a", "narrative": "n/a"}
 
-    profile = store.get(rid, sha, "analysis") if (store and sha) else None
+    profile = store.get(rid, sha, K_ANALYSIS) if (store and sha) else None
     if profile:
         cache["analysis"] = "hit"
     else:
@@ -71,16 +75,16 @@ def run(source: str, store: Store | None = None, router=None, now: float | None 
             profile["external"] = external.gather(*parts)   # snapshot as of analysis time; cached with the SHA
         cache["analysis"] = "miss"
         if store and sha:
-            store.put(rid, sha, "analysis", profile)
+            store.put(rid, sha, K_ANALYSIS, profile)
 
     narrative = None
     if router is not None:
-        cached = store.get(rid, sha, "narrative") if (store and sha) else None
+        cached = store.get(rid, sha, K_NARRATIVE) if (store and sha) else None
         if cached:
             narrative, cache["narrative"] = cached, "hit"
         else:
             cache["narrative"] = "miss"
             narrative = narrate_mod.narrate(evidence.build_packet(profile), router)
             if narrative and store and sha:
-                store.put(rid, sha, "narrative", narrative)
+                store.put(rid, sha, K_NARRATIVE, narrative)
     return {"profile": profile, "narrative": narrative, "cache": cache}

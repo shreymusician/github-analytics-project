@@ -203,3 +203,12 @@ def test_narrate_waits_once_when_a_provider_recovers_soon(repo):
         def ask(self, messages, **kw):
             raise AllProvidersFailed({"groq": "down"})
     assert narrate(pk, Hopeless(), sleep=slept.append) is None and slept == [13.0]    # too long: gives up, no sleep
+
+
+def test_old_version_cache_entries_are_ignored(repo):
+    store = Store(":memory:")
+    rid = profile.repo_id(str(repo))
+    sha = profile._head_sha(repo)
+    store.put(rid, sha, "analysis", {"stale": True})            # what an older version would have stored
+    res = profile.run(str(repo), store=store)
+    assert res["cache"]["analysis"] == "miss" and "stale" not in res["profile"]
