@@ -86,6 +86,18 @@ These are things I already suspect are wrong or weak. Please say if they bother 
 - **Narration is from one model family**, mostly Groq gpt-oss-120b, with Gemini as fallback; wording and judgment can vary between runs of the same repo.
 - **The citations check names, filenames and numbers, not meaning.** A statement can pass and still be misleading, so please flag any claim that feels wrong even if it looks cited.
 
+## Automated verification (done without a human, analyzer version 8)
+
+Because reading every report is slow, three automatic checks were run. They verify facts and internal consistency; they do **not** replace your judgment of whether a report is useful.
+
+**1. Facts checked against GitHub** (`scripts/fact_check.py`): 78 of 80 facts agree. Dockerfile, CI, license, dependency manifest, tests, file count and activity status all matched GitHub's own file list and default-branch commit dates on all ten repos. The two disagreements are `primary_language` for monodepth2 and Reinforcement-Learning: GitHub says "Jupyter Notebook" because it counts raw notebook bytes including embedded outputs; we count the code people wrote (Python). We think ours is the more faithful answer. These are easy facts with simple rules on both sides, so this shows there are no gross analyzer bugs, nothing more.
+
+**2. Second-model audit of every claim** (`scripts/audit_gate_a.py`): a different model (Gemini for eight repos, Groq for two whose narrator was Gemini) judged each statement against the evidence. 103 claims: 102 supported, 1 partly, 0 unsupported, 0 contradicted. Positive control (`scripts/audit_selftest.py`): the judge caught 3 of 3 planted false claims and accepted the planted true one. Earlier runs of the audit were useful: they flagged the narrator guessing each repo's "audience" (the prompt now forbids guessing) and reading-list reasons inferred from file names alone (Reinforcement-Learning). Limits: the judge sees the same evidence as the narrator, so it cannot find facts the evidence never held, and four planted claims prove sensitivity to obvious errors only.
+
+**3. Comparison with DeepWiki** (`docs/DEEPWIKI_COMPARISON.md`, three repos, overview pages only): DeepWiki explains what the code does and how, much better than we do (including for TypeScript); our reports add maintenance, test/CI/deployability, history and risk signals that its overview pages did not show. Complementary, not a replacement. Author's reading, not neutral.
+
+**What is still unknown and needs you:** whether a person finds the reports insightful, whether the maturity labels and read-first lists feel right, and whether the scores are too generous. The audit cannot answer those.
+
 ## Where to record your scores
 
 Preferred: edit **`data/labels/gate_a.csv`** (open it in Excel or any editor). Machine columns are pre-filled; fill the seven human columns per repo:
