@@ -47,7 +47,7 @@ def narrate(packet: dict, router, retries: int = 1, max_wait: float = 45.0, slee
                 {"role": "user", "content": "EVIDENCE:\n" + packet_text(packet)}]
     for attempt in range(retries + 1):
         try:
-            text, provider = _ask_with_patience(router, messages, max_wait, sleep)
+            text, provider = ask_with_patience(router, messages, max_wait, sleep)
         except AllProvidersFailed:
             return None
         data = _parse(text)
@@ -59,17 +59,19 @@ def narrate(packet: dict, router, retries: int = 1, max_wait: float = 45.0, slee
     return None
 
 
-def _ask_with_patience(router, messages, max_wait: float, sleep):
+def ask_with_patience(router, messages, max_wait: float = 45.0, sleep=time.sleep, **ask_kw):
     """Free tiers rate-limit in bursts. If every provider failed but one will be usable again shortly, wait once
-    and retry instead of giving up on a narration that is a few seconds away."""
+    and retry instead of giving up on an answer that is a few seconds away. `ask_kw` overrides the defaults
+    (json_mode=True, max_tokens=NARRATE_MAX_TOKENS), e.g. prefer="gemini"."""
+    kw = {"json_mode": True, "max_tokens": NARRATE_MAX_TOKENS, **ask_kw}
     try:
-        return router.ask(messages, json_mode=True, max_tokens=NARRATE_MAX_TOKENS)
+        return router.ask(messages, **kw)
     except AllProvidersFailed:
         wait = getattr(router, "soonest_available", lambda: None)()
         if wait is None or wait > max_wait:
             raise
         sleep(wait + 1)
-        return router.ask(messages, json_mode=True, max_tokens=NARRATE_MAX_TOKENS)
+        return router.ask(messages, **kw)
 
 
 def _parse(text: str) -> dict | None:
