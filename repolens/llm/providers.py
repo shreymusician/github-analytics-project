@@ -34,7 +34,7 @@ PROVIDERS: dict[str, Provider] = {
         Provider("groq", "https://api.groq.com/openai/v1",
                  "openai/gpt-oss-120b", "GROQ_MODEL", "GROQ_API_KEY"),
         Provider("gemini", "https://generativelanguage.googleapis.com/v1beta/openai",
-                 "gemini-3.1-flash-lite", "GEMINI_MODEL", "GEMINI_API_KEY"),
+                 "gemini-3.5-flash-lite", "GEMINI_MODEL", "GEMINI_API_KEY"),
         Provider("openrouter", "https://openrouter.ai/api/v1",
                  "openai/gpt-oss-20b:free", "OPENROUTER_MODEL", "OPENROUTER_API_KEY"),
         Provider("github", "https://models.github.ai/inference",
