@@ -174,3 +174,32 @@ def test_storage_corrupt_row_is_a_miss():
     s = Store(":memory:")
     s.db.execute("INSERT INTO artifacts VALUES ('r','s','analysis','{not json',0)")
     assert s.get("r", "s", "analysis") is None
+
+
+def test_narrate_waits_once_when_a_provider_recovers_soon(repo):
+    pk = evidence.build_packet(profile.analyze(str(repo)))
+    slept = []
+
+    class Flaky:
+        def __init__(self):
+            self.n = 0
+
+        def ask(self, messages, **kw):
+            self.n += 1
+            if self.n == 1:
+                raise AllProvidersFailed({"groq": "HTTP 429"})
+            return good_reply(pk), "groq"
+
+        def soonest_available(self):
+            return 12.0
+
+    out = narrate(pk, Flaky(), sleep=slept.append)
+    assert out and out["provider"] == "groq" and slept == [13.0]
+
+    class Hopeless(Flaky):
+        def soonest_available(self):
+            return 600.0
+
+        def ask(self, messages, **kw):
+            raise AllProvidersFailed({"groq": "down"})
+    assert narrate(pk, Hopeless(), sleep=slept.append) is None and slept == [13.0]    # too long: gives up, no sleep
