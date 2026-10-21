@@ -79,3 +79,39 @@ def test_generic_catch_all_files_are_picked_last(tmp_path):
     assert got[0] == "pkg/parser.py"                                                # a graph pick that is generic is skipped first
     assert got.index("pkg/parser.py") < got.index("pkg/utils.py") and got.index("pkg/parser.py") < got.index("pkg/common.py")
     assert set(got) == set(files)                                                   # still shown if there is room
+
+
+def _nb(root, rel, headings, code_cells):
+    import json
+    cells = [{"cell_type": "markdown", "source": [f"# {h}\n"]} for h in headings]
+    cells += [{"cell_type": "code", "source": [f"x{i} = {i}\n"], "outputs": [{"data": {"image/png": "A" * 100_000}}]} for i in range(code_cells)]
+    p = root / rel
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps({"cells": cells, "nbformat": 4}), encoding="utf-8")
+
+
+def test_notebook_first_repos_get_their_busiest_notebooks_as_readable_excerpts(tmp_path):
+    sh(tmp_path, "init", "-q")
+    _nb(tmp_path, "week1/intro.ipynb", ["Intro to RL", "Rewards"], 5)
+    _nb(tmp_path, "week2/dqn.ipynb", ["Deep Q Networks"], 9)
+    _nb(tmp_path, "week3/tiny.ipynb", ["Tiny"], 1)                 # fewer than 3 code cells: not worth reading
+    write(tmp_path, "README.md", "# Course\n" + "y" * 600)
+    sh(tmp_path, "add", "-A")
+    sh(tmp_path, "commit", "-qm", "x")
+    p = profile.analyze(str(tmp_path))
+    files = [e["file"] for e in p["samples"]["arch_excerpts"]]
+    assert files[:2] == ["week2/dqn.ipynb", "week1/intro.ipynb"] and "week3/tiny.ipynb" not in files   # busiest first
+    dqn = next(e for e in p["samples"]["arch_excerpts"] if e["file"] == "week2/dqn.ipynb")["text"]
+    assert "## Deep Q Networks" in dqn and "x0 = 0" in dqn
+    assert "AAAA" not in dqn and "{" not in dqn                           # a reading view, never raw JSON or outputs
+
+
+def test_code_first_repos_do_not_spend_slots_on_a_stray_notebook(tmp_path):
+    sh(tmp_path, "init", "-q")
+    for i in range(6):
+        write(tmp_path, f"pkg/m{i}.py", "def f():\n    return 1\n" * 40)
+    _nb(tmp_path, "examples/demo.ipynb", ["Demo"], 6)
+    sh(tmp_path, "add", "-A")
+    sh(tmp_path, "commit", "-qm", "x")
+    p = profile.analyze(str(tmp_path))
+    assert not any(e["file"].endswith(".ipynb") for e in p["samples"]["arch_excerpts"])

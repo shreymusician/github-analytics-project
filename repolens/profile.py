@@ -5,7 +5,7 @@ import re
 import time
 from pathlib import Path
 
-from . import architecture as arch_mod, evidence, graph, history, narrate as narrate_mod, signals, stack
+from . import architecture as arch_mod, evidence, graph, history, narrate as narrate_mod, notebooks, signals, stack
 from .fetch import git, github_parts, open_repo, repo_id
 from .files import read_text
 from .redact import redact
@@ -21,6 +21,7 @@ README_CHARS, EXCERPT_CHARS, EXCERPT_LINES, EXCERPTS = 1500, 1200, 60, 3
 
 # The "how it works" stage reads more source than the main narration does.
 ARCH_FILES, ARCH_EXCERPT_LINES, ARCH_EXCERPT_CHARS = 6, 80, 1800
+NOTEBOOK_HEAVY_SHARE, MAX_NOTEBOOK_PICKS = 0.25, 3     # authored share that makes a repo "notebook-first"
 _ENTRY_STEMS = ("index", "main", "app", "cli", "server", "core", "engine", "pipeline", "model", "models", "api", "__main__")
 _GENERATED = re.compile(r"(\.min\.|\.bundle\.|\.d\.ts$|-lock\.|\.lock$)")
 
@@ -60,6 +61,14 @@ def pick_arch_files(root: Path, st: dict, arch: dict, hist: dict | None = None, 
     for rel in hot[:2]:
         take(rel)
 
+    # 2b. Notebook-first repos (courses, tutorials, research demos): their content IS the notebooks.
+    authored = (st.get("file_census") or {}).get("authored", {})
+    n_sources = sum(1 for p in st.get("path_index", []) if _is_source(p))
+    if arch.get("notebooks") and (authored.get("notebooks", 0) >= NOTEBOOK_HEAVY_SHARE or n_sources < 4):
+        for nb in arch["notebooks"]:                   # already ordered busiest first
+            if nb["code_cells"] >= 3 and sum(c.lower().endswith(".ipynb") for c in chosen) < MAX_NOTEBOOK_PICKS:
+                take(nb["file"])
+
     sources = [p for p in st.get("path_index", []) if _is_source(p)] or [p for p in st.get("notable_files", []) if _is_source(p)]
     by_dir: dict[str, list[tuple[int, str]]] = {}
     for p in sources:
@@ -85,6 +94,9 @@ def pick_arch_files(root: Path, st: dict, arch: dict, hist: dict | None = None, 
 
 
 def _excerpt(root: Path, rel: str, lines: int, chars: int) -> str:
+    if rel.lower().endswith(".ipynb"):                 # never raw JSON: headings plus the start of each code cell
+        nb = notebooks.read_notebook(root / rel)
+        return notebooks.reading_view(nb, lines, chars) if nb else ""
     return "\n".join(read_text(root / rel).splitlines()[:lines])[:chars]
 
 
