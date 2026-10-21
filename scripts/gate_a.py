@@ -24,7 +24,7 @@ for i, repo in enumerate(REPOS, 1):
         (out / f"{i:02d}_{name}.md").write_text(render(res), encoding="utf-8")
         (out / f"{i:02d}_{name}.json").write_text(json.dumps(res, indent=2), encoding="utf-8")
         p, n = res["profile"], res["narrative"]
-        row = {"n": i, "repo": repo, "ok": True, "secs": round(time.time() - t), "cache": res["cache"],
+        row = {"n": i, "repo": repo, "ok": True, "secs": round(time.time() - t), "cache": res["cache"], "timings": res["timings"],
                "completeness": p["completeness"]["score"], "deployability": p["deployability"]["score"],
                "narrated": bool(n), "dropped": n["dropped"] if n else None, "provider": n["provider"] if n else None,
                "dropped_detail": n["dropped_detail"] if n else None}

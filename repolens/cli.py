@@ -46,6 +46,9 @@ def main(argv: list[str] | None = None) -> int:
             store.close()
 
     print(f"cache: {result['cache']}", file=sys.stderr)
+    print("timings (s): " + ", ".join(f"{k}={v}" for k, v in result["timings"].items() if k != "analysis_detail")
+          + (f" | analysis: {result['timings']['analysis_detail']}" if "analysis_detail" in result["timings"] else ""),
+          file=sys.stderr)
     if router is not None and result["narrative"] is None:
         print("warning: AI narration failed on every provider; showing deterministic report.", file=sys.stderr)
     if a.json:
