@@ -110,3 +110,18 @@ def test_rejects_garbage_source():
     from repolens.fetch import FetchError, open_repo
     with pytest.raises(FetchError):
         open_repo("not a repo; rm -rf /")
+
+
+def test_history_query_disables_rename_detection(repo, monkeypatch):
+    """Rename detection makes git fetch file contents one batch at a time in a partial clone
+    (--filter=blob:none): chonkie's cold history step took 41 s vs 0.5 s warm. We only need touched file names."""
+    seen = []
+    real = history.git
+
+    def spy(args, cwd=None):
+        seen.append(list(args))
+        return real(args, cwd=cwd)
+
+    monkeypatch.setattr(history, "git", spy)
+    out = history.analyze_history(repo, now=time.time())
+    assert out["commits"] == 5 and any("--no-renames" in a for a in seen)

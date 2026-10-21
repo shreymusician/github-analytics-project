@@ -36,7 +36,7 @@ def parse_log(raw: str) -> list[dict]:
 def analyze_history(repo_dir, now: float | None = None, max_commits: int = 5000) -> dict:
     now = now or time.time()
     try:
-        raw = git(["log", f"-n{max_commits}", "--no-merges", "--name-only",
+        raw = git(["log", f"-n{max_commits}", "--no-merges", "--no-renames", "--name-only",
                    f"--pretty=format:{_SEP}%H{_FLD}%an{_FLD}%at{_FLD}%s"], cwd=repo_dir)
     except FetchError:
         return {"commits": 0, "status": "no-git-history"}
