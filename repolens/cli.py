@@ -37,7 +37,7 @@ def main(argv: list[str] | None = None) -> int:
     store = None if a.no_cache else Store(a.db)
     try:
         ext = None if a.offline else External(github_token=os.environ.get("GITHUB_TOKEN"))
-        result = run(a.source, store=store, router=router, external=ext)
+        result = run(a.source, store=store, router=router, external=ext, architecture=True)
     except FetchError as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
