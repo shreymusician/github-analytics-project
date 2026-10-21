@@ -104,6 +104,16 @@ The pipeline combines: (1) lazy analysis, (2) a live discovery agent, (3) depend
 **Known limits:** regex, not a parser; tsconfig/bundler path aliases are not resolved, so aliased imports look external (under-reports internal edges, never invents them); other languages (Go, Rust, Java) still have no graph, and the report says so.
 **Related rules added the same day:** test files never lead "read first"; the best one or two entry points always come first; scripts under docs/debug/examples are not entry points; catch-all modules (utils, common, helpers) rank lower.
 
+## D21. Notebooks are read as data: outline, imports, reading view
+**Decision:** `repolens/notebooks.py` parses notebooks as JSON and reads only cell sources: a title and headings, code/markdown cell counts, third-party imports (via `ast`, with a one-line regex fallback for cells that do not parse), and a compact "reading view" (headings plus the first lines of each code cell). Outputs are never read or sent, notebooks are never executed. Notebook imports feed the same third-party counter and capability tags as Python and JS/TS. In notebook-first repos (notebooks at least 25% of what the authors wrote, or fewer than 4 source files) the "how it works" stage reads up to 3 of the busiest notebooks.
+**Why:** several AI/ML repos are notebook-first (courses, tutorials, research demos); their bytes are mostly embedded plots, so size says nothing and the content was invisible.
+**Limits:** notebooks do not import each other in the graph; nbformat 3 and notebooks over 30 MB are skipped; only the first 40 notebooks are scanned.
+
+## D22. Be liberal in what we parse from models, strict in what we keep
+**Decision:** `_parse()` repairs one known, predictable model mistake (unquoted evidence IDs such as `"evidence":[E38,E41]`), tolerates raw control characters inside strings, and extracts the outermost `{...}` from chatter or code fences. After parsing, every statement still goes through the same strict grounding. An uncited audience means "none" (not an error); other uncited fields are still dropped and counted.
+**Why:** unquoted IDs destroyed the narration for two repos on every attempt, and a retry that asks for "valid JSON" just repeats the mistake. Repairing a known pattern is cheaper and safer than re-asking.
+**Guardrail:** the repair touches only the contents of `"evidence"` arrays and only tokens shaped like E12 or S3.
+
 ## Open questions
 - Product vs. hackathon/college project? (changes polish and scope)
 - Local tool vs. hosted service? (affects sandbox design and key handling)
