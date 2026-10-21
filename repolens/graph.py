@@ -46,7 +46,10 @@ def build_graph(root: Path, external: Counter | None = None) -> tuple[dict[str, 
         if rel.endswith(".py"):
             sources[module_name(rel)] = (rel, path)
     mods = set(sources)
-    local_tops = {m.split(".")[0] for m in mods} | {Path(r).parts[0] for r, _ in sources.values() if "/" in r}
+    # Names that refer to the repo itself. Scripts run from their own folder import siblings by bare name
+    # ("import neural_net" beside neural_net.py), so every .py file's stem counts as local, not just top-level ones.
+    local_tops = ({m.split(".")[0] for m in mods} | {Path(r).parts[0] for r, _ in sources.values() if "/" in r}
+                  | {Path(r).stem for r, _ in sources.values()})
     edges: dict[str, set[str]] = {m: set() for m in mods}
     entries: set[str] = set()
 
@@ -215,7 +218,7 @@ def analyze_architecture(root: Path, top: int = 8) -> dict:
     edges, paths, entries = {**py_edges, **js_edges}, {**paths, **js_paths}, entries | js_entries
     entries = {m for m in entries if not _NON_ENTRY_DIRS.search(paths[m])}      # also for JS/TS entry files
     nbs = scan_notebooks(root)
-    repo_names = {p.name for p in root.iterdir() if p.is_dir()} | {p.stem for p in root.glob("*.py")}
+    repo_names = {p.name for p in root.iterdir() if p.is_dir()} | {Path(p).stem for p in paths.values()}   # paths: every graphed Python and JS/TS file
     for nb in nbs:                                                           # notebooks count as importing files too
         ext.update(m for m in nb["imports"] if m not in _STDLIB and m not in repo_names)
     nb_info = {"notebook_files": len(nbs),

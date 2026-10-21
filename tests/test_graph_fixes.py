@@ -54,3 +54,22 @@ def test_test_files_never_appear_in_read_first(tmp_path):
     files = [r["file"] for r in graph.analyze_architecture(tmp_path)["read_first"]]
     assert files and not any("test" in f for f in files)
     assert "pkg/engine.py" in files
+
+
+def test_sibling_modules_imported_by_bare_name_are_local_not_third_party(tmp_path):
+    """Reinforcement-Learning listed neural_net, agent and atari_wrappers as third-party libraries: scripts in
+    Week3/ import their siblings by bare name because they are run from that folder."""
+    write(tmp_path, "Week3/main.py", "import neural_net\nimport agent\nfrom atari_wrappers import wrap\nimport numpy as np\nimport gym\n")
+    write(tmp_path, "Week3/neural_net.py", "import torch\nx = 1\n")
+    write(tmp_path, "Week3/agent.py", "import numpy\n")
+    write(tmp_path, "Week3/atari_wrappers.py", "def wrap():\n    pass\n")
+    mods = {i["module"] for i in graph.analyze_architecture(tmp_path)["third_party_imports"]}
+    assert mods == {"numpy", "gym", "torch"}
+
+
+def test_notebooks_do_not_count_sibling_scripts_as_third_party(tmp_path):
+    import json
+    write(tmp_path, "Week5/ppo_utils.py", "def f():\n    pass\n")
+    nb = {"cells": [{"cell_type": "code", "source": ["import ppo_utils\nimport torch\n"], "outputs": []}], "nbformat": 4}
+    (tmp_path / "Week5" / "demo.ipynb").write_text(json.dumps(nb), encoding="utf-8")
+    assert {i["module"] for i in graph.analyze_architecture(tmp_path)["third_party_imports"]} == {"torch"}
