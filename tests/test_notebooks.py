@@ -54,3 +54,25 @@ def test_notebook_with_odd_cells_and_string_sources_does_not_crash(tmp_path):
     nb = notebooks.read_notebook(p)
     assert nb["title"] == "One-line string source" and nb["code_cells"] == 1
     assert notebooks.notebook_imports(nb["code"]) == {"re"} and "import re" in notebooks.reading_view(nb)
+
+
+def test_architecture_sees_notebook_imports_outline_and_ignores_local_modules(tmp_path):
+    from repolens import graph, stack
+    (tmp_path / "mylib").mkdir()
+    (tmp_path / "mylib" / "__init__.py").write_text("x = 1\n", encoding="utf-8")
+    nb_file(tmp_path, [MD("# Welcome to RL\n## Q-learning"), CODE("import gym\nimport numpy as np\nimport mylib\nimport os\n"), CODE("x = 1")], "week1.ipynb")
+    nb_file(tmp_path, [MD("# Second"), CODE("import torch\nimport gym")], "week2.ipynb")
+    a = graph.analyze_architecture(tmp_path)
+    assert a["notebook_files"] == 2 and a["notebooks"][0]["file"] == "week1.ipynb"          # most code cells first
+    assert a["notebooks"][0]["title"] == "Welcome to RL" and "imports" not in a["notebooks"][0]
+    mods = {i["module"]: i["files"] for i in a["third_party_imports"]}
+    assert mods == {"gym": 2, "numpy": 1, "torch": 1}                                        # not os (stdlib), not mylib (local)
+    assert {"reinforcement-learning", "deep-learning", "data"} <= set(stack.tags_for_imports(a["third_party_imports"]))
+
+
+def test_notebook_only_repo_still_reports_notebooks_without_python_modules(tmp_path):
+    from repolens import graph
+    nb_file(tmp_path, [MD("# Only a notebook"), CODE("import pandas as pd")], "only.ipynb")
+    a = graph.analyze_architecture(tmp_path)
+    assert a["python_modules"] == 0 and a["js_modules"] == 0 and a["notebook_files"] == 1
+    assert [i["module"] for i in a["third_party_imports"]] == ["pandas"]

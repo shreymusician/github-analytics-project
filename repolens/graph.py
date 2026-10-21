@@ -15,6 +15,7 @@ from pathlib import Path
 
 from .files import iter_files, read_text
 from .jsgraph import JS_EXTS, build_js_graph
+from .notebooks import scan_repo as scan_notebooks
 from .signals import _is_test as is_test_path
 
 SRC_ROOTS = ("src", "lib", "app")  # common layouts where the package root is one level down
@@ -213,8 +214,17 @@ def analyze_architecture(root: Path, top: int = 8) -> dict:
     js_edges, js_paths, js_entries = build_js_graph(root, external=ext)      # same Counter: third-party imports of both
     edges, paths, entries = {**py_edges, **js_edges}, {**paths, **js_paths}, entries | js_entries
     entries = {m for m in entries if not _NON_ENTRY_DIRS.search(paths[m])}      # also for JS/TS entry files
+    nbs = scan_notebooks(root)
+    repo_names = {p.name for p in root.iterdir() if p.is_dir()} | {p.stem for p in root.glob("*.py")}
+    for nb in nbs:                                                           # notebooks count as importing files too
+        ext.update(m for m in nb["imports"] if m not in _STDLIB and m not in repo_names)
+    nb_info = {"notebook_files": len(nbs),
+               "notebooks": [{k: v for k, v in nb.items() if k != "imports"}
+                             for nb in sorted(nbs, key=lambda x: (-x["code_cells"], x["file"]))[:6]]}
     if not edges:
-        return {"python_modules": 0, "js_modules": 0}
+        return {"python_modules": 0, "js_modules": 0, **nb_info,
+                "third_party_imports": [{"module": m, "name": IMPORT_ALIASES.get(m, m), "files": c}
+                                        for m, c in sorted(ext.items(), key=lambda kv: (-kv[1], kv[0]))[:15]]}
     pr = pagerank(edges)
     imported_by = Counter(w for outs in edges.values() for w in outs)
     ranked = rank_read_first(root, edges, paths, entries, pr, imported_by)[:top]
@@ -223,6 +233,7 @@ def analyze_architecture(root: Path, top: int = 8) -> dict:
     return {
         "python_modules": len(py_edges),
         "js_modules": len(js_edges),
+        **nb_info,
         "import_edges": n_edges,
         "third_party_imports": [{"module": m, "name": IMPORT_ALIASES.get(m, m), "files": c}
                                 for m, c in sorted(ext.items(), key=lambda kv: (-kv[1], kv[0]))[:15]],

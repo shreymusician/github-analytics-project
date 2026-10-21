@@ -11,6 +11,8 @@ import json
 import re
 from pathlib import Path
 
+from .files import iter_files
+
 MAX_NOTEBOOK_BYTES = 30_000_000
 _MAGIC = re.compile(r"^\s*[%!?]")                           # %matplotlib inline, !pip install ..., ?func
 _IMPORT_LINE = re.compile(r"^[ \t]*(?:from[ \t]+([\w.]+)[ \t]+import|import[ \t]+([\w.,\t ]+))", re.M)   # one line only
@@ -100,3 +102,20 @@ def outline(nb: dict) -> str:
     return (f"{nb['code_cells']} code cell(s), {nb['markdown_cells']} markdown cell(s)"
             + (f"; title: {nb['title']}" if nb["title"] else "")
             + (f"; sections: {' | '.join(sections)}" if sections else ""))
+
+
+def scan_repo(root: Path, limit: int = 40) -> list[dict]:
+    """Summaries of up to `limit` notebooks in the repo (shallowest paths first): file, title, headings, cell counts
+    and the third-party-or-not top-level module names each one imports. Unreadable notebooks are skipped."""
+    out = []
+    for rel, path, _ in iter_files(root):
+        if not rel.lower().endswith(".ipynb"):
+            continue
+        if len(out) >= limit:
+            break
+        nb = read_notebook(path)
+        if nb is None:
+            continue
+        out.append({"file": rel, "title": nb["title"], "headings": nb["headings"], "code_cells": nb["code_cells"],
+                    "markdown_cells": nb["markdown_cells"], "imports": sorted(notebook_imports(nb["code"]))})
+    return out
