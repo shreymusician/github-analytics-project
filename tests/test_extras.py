@@ -25,7 +25,7 @@ def test_census_in_evidence(repo):
     write(repo, "deck.pptx", "x" * 50_000)
     sh(repo, "add", "-A"); sh(repo, "commit", "-qm", "deck")
     text = evidence.packet_text(evidence.build_packet(profile.analyze(str(repo))))
-    assert "File census" in text and "slides" in text
+    assert "authors wrote" in text and "slides" in text
 
 
 # ---------- third-party imports (works without any manifest)

@@ -41,14 +41,23 @@ def render(result: dict) -> str:
           "", "_Heuristic scores from rule checks, not yet calibrated against labeled data. Reasons:_", ""]
     for area in ("completeness", "deployability"):
         L += [f"**{area.capitalize()}**"]
-        L += [f"- {'✓' if e['ok'] else '✗'} {e['note']}" for e in p[area]["evidence"]]
+        L += [f"- {'–' if e['ok'] is None else '✓' if e['ok'] else '✗'} {e['note']}" for e in p[area]["evidence"]]
         L += [""]
+    if p.get("analysis_depth") == "partial":
+        L += ["> **Partial analysis:** the import graph and code-quality checks cover Python only, so for this repo's "
+              "main language the architecture and completeness details are limited (checks marked – were not run).", ""]
 
     cen = st.get("file_census")
     if cen:
-        L += ["## Composition (all files, by size)", "",
-              " · ".join(f"**{c}** {d['share_bytes']:.0%}" for c, d in list(cen["categories"].items())[:6]),
-              f"({cen['total_files']} files)", ""]
+        authored = cen.get("authored") or {}
+        L += ["## Composition", ""]
+        if authored:
+            L += ["**What the authors wrote** (by size, excluding binary assets): "
+                  + " · ".join(f"**{c}** {v:.0%}" for c, v in list(authored.items())[:5]),
+                  f"Binary assets and data (images, weights, datasets) add {cen.get('assets_share_bytes', 0):.0%} of all bytes. "
+                  f"{cen['total_files']} files in total.", ""]
+        else:
+            L += [f"No authored text/code found; binary assets are {cen.get('assets_share_bytes', 0):.0%} of bytes.", ""]
     L += ["## Stack", f"- Languages: {', '.join(f'{k} {v:.0%}' for k, v in st['languages'].items()) or 'none detected'}",
           f"- Capabilities: {', '.join(st['capability_tags']) or 'none recognized'}",
           f"- Dependencies: {st['dependency_count']} (pinned ratio {st['pinned_ratio']})", ""]
@@ -58,8 +67,12 @@ def render(result: dict) -> str:
         learn = {x["file"]: x for x in (n or {}).get("learning_path", [])}
         for r in ar["read_first"]:
             why = f": {learn[r['file']]['text']}{_cite(learn[r['file']])}" if r["file"] in learn else ""
-            L += [f"- `{r['file']}` (imported by {r['imported_by']}){why}"]
+            L += [f"- `{r['file']}` (imported by {r['imported_by']}, imports {r.get('imports', '?')}){why}"]
+        listed = {r["file"] for r in ar["read_first"]}
+        L += [f"- `{f}`: {x['text']}{_cite(x)}" for f, x in learn.items() if f not in listed]
         L += [""]
+    elif n and n.get("learning_path"):
+        L += ["## Read these first", ""] + [f"- `{x['file']}`: {x['text']}{_cite(x)}" for x in n["learning_path"]] + [""]
     if ar.get("subsystems"):
         L += ["## Subsystems (found from import coupling)", ""]
         L += [f"- **{s['name']}** ({s['size']} modules): {', '.join(f'`{f}`' for f in s['files'][:4])}" for s in ar["subsystems"]]

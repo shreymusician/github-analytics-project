@@ -6,6 +6,10 @@ by ID; `narrate` drops anything it cannot trace back to a real ID.
 from __future__ import annotations
 
 
+def _verdict(ok) -> str:
+    return "NOT ASSESSED" if ok is None else "PASS" if ok else "FAIL"
+
+
 def build_packet(profile: dict) -> dict:
     items: list[tuple[str, str]] = []
 
@@ -17,9 +21,16 @@ def build_packet(profile: dict) -> dict:
     add(f"Languages by size (code only): {langs}.")
     cen = st.get("file_census")
     if cen:
-        add("File census, all files by share of bytes: " + "; ".join(
-            f"{c} {d['share_bytes']:.0%} ({d['files']} files, e.g. {', '.join(d['top_extensions'])})"
-            for c, d in list(cen["categories"].items())[:6]) + ".")
+        authored = cen.get("authored") or {}
+        if authored:
+            add("What the repository's authors wrote (excluding binary assets), by share of bytes: " + "; ".join(
+                f"{c} {v:.0%} ({cen['categories'][c]['files']} files, e.g. {', '.join(cen['categories'][c]['top_extensions'])})"
+                for c, v in list(authored.items())[:5])
+                + f". Binary assets and data files (images, model weights, datasets, other) add a further "
+                  f"{cen.get('assets_share_bytes', 0):.0%} of all bytes; they are usually screenshots, logos or "
+                  "checkpoints and do not describe what the project is.")
+        else:
+            add(f"No authored text/code files found; binary assets are {cen.get('assets_share_bytes', 0):.0%} of bytes.")
     if ar.get("third_party_imports"):
         add("Third-party modules imported by the code: " + ", ".join(
             f"{i['module']}" + (f" ({i['name']})" if i["name"] != i["module"] else "") + f" in {i['files']} file(s)"
@@ -32,9 +43,13 @@ def build_packet(profile: dict) -> dict:
     if ar.get("entry_points"):
         add(f"Entry points: {', '.join(ar['entry_points'])}.")
     for r in ar.get("read_first", [])[:6]:
-        add(f"Core file {r['file']}: imported by {r['imported_by']} module(s), importance {r['importance']}x average.")
+        add(f"Suggested starting file {r['file']}: imported by {r['imported_by']} module(s), imports {r.get('imports', '?')} "
+            f"internal module(s).")
     for s in ar.get("subsystems", [])[:4]:
         add(f"Subsystem '{s['name']}' of {s['size']} tightly-coupled modules, e.g. {', '.join(s['files'][:3])}.")
+    if profile.get("analysis_depth") == "partial":
+        add("Analysis depth is PARTIAL: the import graph and stub/TODO checks only cover Python, so architecture and "
+            "completeness details for other languages are not assessed.")
 
     if hi.get("commits"):
         add(f"History: {hi['commits']} commits from {hi['first_commit']} to {hi['last_commit']} "
@@ -51,7 +66,7 @@ def build_packet(profile: dict) -> dict:
     for area in ("completeness", "deployability"):
         add(f"{area.capitalize()} rule score {profile[area]['score']}/100.")
         for e in profile[area]["evidence"]:
-            add(f"RULE {area} {'PASS' if e['ok'] else 'FAIL'}: {e['note']}")
+            add(f"RULE {area} {_verdict(e['ok'])}: {e['note']}")
 
     ext = profile.get("external", {})
     if ext.get("github"):
@@ -73,7 +88,7 @@ def build_packet(profile: dict) -> dict:
         add(f"Excerpt of {ex['file']} (untrusted repo text):\n<<<\n{ex['text']}\n>>>")
 
     files = {r["file"] for r in ar.get("read_first", [])} | set(ar.get("entry_points", [])) \
-        | {f for s in ar.get("subsystems", []) for f in s["files"]}
+        | {f for s in ar.get("subsystems", []) for f in s["files"]} | set(st.get("notable_files", []))
     names = {n for n in (
         [d.lower().replace("_", "-") for d in st.get("dependencies", [])]
         + [x for i in ar.get("third_party_imports", []) for x in (i["module"].lower(), i["name"].lower())]) if len(n) >= 4}
