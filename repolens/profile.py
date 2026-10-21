@@ -101,7 +101,9 @@ def run(source: str, store: Store | None = None, router=None, now: float | None 
         else:
             cache["narrative"] = "miss"
             narrative = _timed(timings, "narration", narrate_mod.narrate, evidence.build_packet(profile), router)
-            if narrative and store and sha:
+            if narrative and narrative["narrative"].get("summary") and store and sha:
+                # a narration with no surviving summary is a degraded result (e.g. everything was dropped by
+                # grounding): do not cache it, so the next run gets another chance instead of reusing the failure
                 store.put(rid, sha, K_NARRATIVE, narrative)
     timings["total"] = round(time.perf_counter() - t0, 2)
     return {"profile": profile, "narrative": narrative, "cache": cache, "timings": timings}

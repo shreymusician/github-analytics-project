@@ -237,3 +237,17 @@ def test_run_reports_where_time_went(repo):
     assert all(v >= 0 for k, v in t.items() if k != "analysis_detail") and t["total"] >= t["analysis"]
     again = profile.run(str(repo), store=store)               # cache hit: no analysis work to time
     assert "analysis" not in again["timings"] and "narration" not in again["timings"]
+
+
+def test_degraded_narration_is_not_cached(repo):
+    """If every statement is dropped the summary is None; caching that would pin the failure to this commit."""
+    store = Store(":memory:")
+    pk = evidence.build_packet(profile.analyze(str(repo)))
+    bad = good_reply(pk, summary={"text": "Built with PyTorch.", "evidence": [find(pk, "Capabilities inferred")]})
+    first = profile.run(str(repo), store=store, router=FakeRouter(bad))
+    assert first["narrative"]["narrative"]["summary"] is None and first["cache"]["narrative"] == "miss"
+    second = profile.run(str(repo), store=store, router=FakeRouter(good_reply(pk)))
+    assert second["cache"]["narrative"] == "miss"                     # not served from cache: it tried again
+    assert second["narrative"]["narrative"]["summary"] is not None
+    third = profile.run(str(repo), store=store, router=FakeRouter())   # a good narration IS cached
+    assert third["cache"]["narrative"] == "hit"
