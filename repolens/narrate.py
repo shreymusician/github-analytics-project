@@ -93,7 +93,7 @@ def _parse(text: str) -> dict | None:
     return data if isinstance(data, dict) else None
 
 
-_CITE_TOKEN = re.compile(r"\[?\bE\d+\b\]?")                                    # E38, [E38]
+_CITE_TOKEN = re.compile(r"\[?\b[ES]\d+\b\]?")                                 # E38, [E38], S3 (architecture stage)
 _NUM = re.compile(r"\d[\d,]*(?:\.\d+)?")
 _MIXED = re.compile(r"\b(?=[A-Za-z0-9]*[a-z][A-Z])[A-Za-z0-9]+\b")          # NumPy, FastAPI, PyTorch
 _FILE = re.compile(r"[\w\-./]+\.(?:py|js|jsx|ts|tsx|go|rs|java|md|json|ya?ml|toml|txt|cfg|ini|ipynb|sh|ipynb|pptx|pdf)\b", re.I)
