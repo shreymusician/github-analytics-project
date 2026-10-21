@@ -63,6 +63,21 @@ The pipeline combines: (1) lazy analysis, (2) a live discovery agent, (3) depend
 **Why:** the first live run cited IDs that existed but did not support the claim. Strict "cited items only" dropped true statements (model cited the wrong ID); "any ID exists" let unsupported claims through.
 **Known limits:** heuristic, not entailment. A hallucinated plain-word library name (e.g. "Django") is only caught if the analyzers found that name in the repo or it is mixed-case. Judgment errors (the model ignoring the file census) are not detectable this way; mitigated by showing the census deterministically in the report.
 
+**D13 addendum (2026-10-21):** numbers are compared with tolerance for rounding. A round figure (whole, at least 100, multiple of 10) is grounded if some number in the cited evidence is within 10% of it ("about 1500 commits" for 1524). Non-round numbers must match exactly. Trade-off: an invented round figure near a real one passes.
+
+## D14. Cached results are keyed by the code that produced them
+**Decision:** cache kinds are `analysis.v<N>` and `narrative.v<N>` where N is `ANALYZER_VERSION` in `repolens/profile.py`. Bump it whenever analyzer output or the narration prompt changes; older entries are ignored (a miss) but not deleted.
+**Why:** the cache key is repo + commit SHA, so after analyzer fixes an unchanged repo would otherwise keep serving its old, wrong profile.
+**Cost:** a bump forces re-analysis and new LLM calls for every repo, so do not bump for cosmetic changes.
+
+## D15. Checks that cannot run are "not assessed", never "passed"
+**Decision:** a rule that cannot be evaluated for a repo (e.g. stub detection on TypeScript) is recorded with ok=None and weight 0, shown in the report, and excluded from the score; the profile carries `analysis_depth: full | partial`.
+**Why:** a silently-passing check inflated llm-scraper's completeness to 100.
+
+## D16. Narration reserves a modest token budget
+**Decision:** `NARRATE_MAX_TOKENS = 2500`, and narrate() waits once (up to 45 s) when a provider will recover soon.
+**Why:** Groq's free tier counts max_tokens against an 8,000 tokens-per-minute budget before generating, so a 4,000 reservation caused 429s even though real output is under 1,000 tokens.
+
 ## Open questions
 - Product vs. hackathon/college project? (changes polish and scope)
 - Local tool vs. hosted service? (affects sandbox design and key handling)
