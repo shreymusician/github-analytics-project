@@ -179,3 +179,13 @@ def test_external_in_evidence_fenced_and_cached(repo, monkeypatch):
     assert "archived=yes" in text and "Scorecard 4.2/10" in text and "Code-Review 0/10" in text
     desc = next(i for i in evidence.build_packet(second["profile"])["items"] if i["text"].startswith("GitHub description"))
     assert "untrusted" in desc["text"] and "<<<" in desc["text"]
+
+
+def test_rounded_numbers_are_accepted_but_invented_ones_are_not():
+    ev = "History: 1524 commits, 512 days since last commit, 94 test files."
+    assert ungrounded("About 1500 commits.", ev, set()) == []            # round figure within 10% of 1524
+    assert ungrounded("Roughly 500 days idle.", ev, set()) == []         # within 10% of 512
+    assert ungrounded("About 900 commits.", ev, set()) == ["900"]        # not close to anything in the evidence
+    assert ungrounded("Exactly 1523 commits.", ev, set()) == ["1523"]    # non-round numbers must match exactly
+    assert ungrounded("It has 95 test files.", ev, set()) == ["95"]       # near but not round: still checked
+    assert ungrounded("Renders 1080, 1920 frames.", "1920 by 1080", set()) == []   # trailing punctuation ignored

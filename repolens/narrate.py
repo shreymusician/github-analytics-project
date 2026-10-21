@@ -92,6 +92,11 @@ _FILE = re.compile(r"[\w\-./]+\.(?:py|js|jsx|ts|tsx|go|rs|java|md|json|ya?ml|tom
 _WORD = re.compile(r"[A-Za-z][A-Za-z0-9_\-]{3,}")
 
 
+def _is_round(digits: str) -> bool:
+    """A figure people round to: whole, 100 or more, multiple of 10 (1500, 500, 1,400)."""
+    return digits.isdigit() and int(digits) >= 100 and int(digits) % 10 == 0
+
+
 def _norm(s: str) -> str:
     return re.sub(r"[^a-z0-9]", "", s.lower())
 
@@ -104,11 +109,15 @@ def ungrounded(text: str, cited_text: str, names: set[str]) -> list[str]:
     if it is mixed-case; that limitation is accepted for now.
     """
     ev, ev_n = cited_text.lower().replace(",", ""), _norm(cited_text)
+    ev_nums = [float(x) for x in re.findall(r"\d+(?:\.\d+)?", ev)]
     bad = []
     for m in _NUM.findall(text):
-        digits = m.replace(",", "")
-        if len(digits.replace(".", "")) >= 2 and not re.search(rf"(?<![\d.]){re.escape(digits)}(?![\d])", ev):
-            bad.append(m)
+        digits = m.replace(",", "").rstrip(".")
+        if len(digits.replace(".", "")) < 2 or re.search(rf"(?<![\d.]){re.escape(digits)}(?![\d])", ev):
+            continue
+        if _is_round(digits) and any(abs(n - float(digits)) <= 0.1 * max(n, float(digits)) for n in ev_nums):
+            continue        # "about 1500 commits" for 1524 is a fair rounding, not an invented number
+        bad.append(m.strip(","))
     for m in _MIXED.findall(text) + _FILE.findall(text):
         if _norm(m) not in ev_n:
             bad.append(m)
