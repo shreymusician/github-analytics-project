@@ -251,3 +251,13 @@ def test_degraded_narration_is_not_cached(repo):
     assert second["narrative"]["narrative"]["summary"] is not None
     third = profile.run(str(repo), store=store, router=FakeRouter())   # a good narration IS cached
     assert third["cache"]["narrative"] == "hit"
+
+
+def test_prompt_tells_the_model_not_to_guess_the_audience_and_null_audience_is_handled(prof):
+    from repolens.narrate import SYSTEM
+    assert 'set "audience" to null' in SYSTEM and "Do not infer an audience" in SYSTEM
+    pk = evidence.build_packet(prof)
+    reply = json.loads(good_reply(pk))
+    reply["audience"] = None                                  # what the model should return when nothing states it
+    out = narrate(pk, FakeRouter(json.dumps(reply)))
+    assert out["narrative"]["audience"] is None and out["dropped"] == 0     # null is valid, not a dropped statement
