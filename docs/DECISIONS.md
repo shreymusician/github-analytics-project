@@ -77,6 +77,7 @@ The pipeline combines: (1) lazy analysis, (2) a live discovery agent, (3) depend
 ## D16. Narration reserves a modest token budget
 **Decision:** `NARRATE_MAX_TOKENS = 2500`, and narrate() waits once (up to 45 s) when a provider will recover soon.
 **Why:** Groq's free tier counts max_tokens against an 8,000 tokens-per-minute budget before generating, so a 4,000 reservation caused 429s even though real output is under 1,000 tokens.
+**Update (later the same day):** once development testing accumulated, the binding limit became Groq's DAILY budget (200,000 tokens per day; 199,280 used), which returns 429 with a 20-minute retry hint. That is longer than the 45 s patience, so calls fall through to the next provider by design.
 
 ## D17. Verify with independent sources before asking a human
 **Decision:** before asking the reviewer to grade reports, run (1) a fact-check against GitHub's own data using separate, simple logic, and (2) a second-model audit of every claim, with a planted-falsehood control to show the judge is not simply approving everything. Ask the human only for what machines cannot judge: whether a report is useful.
@@ -90,6 +91,12 @@ The pipeline combines: (1) lazy analysis, (2) a live discovery agent, (3) depend
 **What is NOT verified, and this is the accepted risk:** that a real person finds the reports insightful and the scores about right. Gate A is therefore recorded as "machine-verified, human-unverified", NOT "passed". Scores stay uncalibrated; the labels file (data/labels/gate_a.csv) stays empty on the human side.
 **Consequences:** V2 score calibration has no human labels yet, so score weights remain first guesses and should be presented as such; a cheap automated proxy for usefulness is worth building (see ROADMAP/STATUS); any user-facing launch should be treated as an experiment that gathers real feedback, not a proven product.
 **Revisit:** whenever the owner (or any early user) is willing to spend 10 minutes tapping useful/meh/wrong on a few reports.
+
+## D19. A separate, cited "how it works" stage
+**Decision:** explaining how the code works is its own LLM stage (`repolens/architecture.py`), not a few more sentences in the main narration. It reads up to 6 source excerpts in any language, uses its own evidence IDs (S1, S2...), applies the shared grounding rules, additionally requires each named component to exist as a file and be visible in the evidence it cites, and prefers Gemini (longer context; leaves Groq's budget to the narration). It is opt-in in `run(architecture=True)`, cached per commit, and not cached when empty.
+**Why:** the DeepWiki comparison showed this is where we are weakest, and the import graph gives nothing for non-Python repos; reading source directly works for any language.
+**Known limits:** quality depends on which files are shown. chonkie's report explains the API and CLI but misses the chunkers, because the picker favors well-imported glue files. Cited does not mean complete.
+**Next:** pick files by directory/role (for example the package's largest, most-changed or most-named modules), not only by import counts.
 
 ## Open questions
 - Product vs. hackathon/college project? (changes polish and scope)
