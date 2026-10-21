@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import ast
+import re
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -80,6 +81,8 @@ def build_graph(root: Path, external: Counter | None = None) -> tuple[dict[str, 
             external.update(seen_ext)
         if not rel.endswith("__init__.py") and mod.rsplit(".", 1)[-1] in {"main", "app", "cli", "__main__", "manage", "server", "run"}:
             entries.add(mod)
+    # A script under docs/, debug/, examples/... runs when invoked but is not how the project is used.
+    entries = {m for m in entries if not _NON_ENTRY_DIRS.search(sources[m][0])}
     return edges, {m: v[0] for m, v in sources.items()}, entries
 
 
@@ -151,6 +154,10 @@ def _name_cluster(members: list[str]) -> str:
 
 
 TRIVIAL_NAMES = {"__about__", "__version__", "_version", "version", "constants", "exceptions", "logger"}
+# Catch-all modules: real code, but rarely the place to learn what a project does. Ranked lower, not excluded.
+GENERIC_STEMS = {"utils", "util", "helpers", "helper", "common", "misc"}
+GENERIC_PENALTY = 0.5
+_NON_ENTRY_DIRS = re.compile(r"(^|/)(docs?|debug|examples?|samples?|benchmarks?|bench|tests?|tutorials?)/", re.I)
 MIN_SUBSTANCE = 12
 
 
@@ -181,6 +188,7 @@ def rank_read_first(root: Path, edges, paths, entries, pr, imported_by) -> list[
 
     def score(m: str) -> float:
         s = 0.5 * pr[m] / max_pr + 0.3 * len(edges[m]) / max_out + 0.2 * subst[m] / max_sub
+        s = s * GENERIC_PENALTY if m.rsplit(".", 1)[-1] in GENERIC_STEMS else s
         return s + (0.3 if m in entries else 0)
     return sorted(cand, key=lambda m: (-score(m), m))
 
