@@ -120,3 +120,24 @@ def test_soonest_available():
     with pytest.raises(AllProvidersFailed):
         dead.ask([])
     assert dead.soonest_available() is None
+
+
+def test_server_errors_are_benched_briefly_rate_limits_longer():
+    t = [0.0]
+
+    def handler(req):
+        return httpx.Response(503) if "groq" in host(req) else httpx.Response(429)       # no Retry-After on either
+
+    r = make(handler, keys={"groq": "k1", "gemini": "k2"}, clock=lambda: t[0])
+    with pytest.raises(AllProvidersFailed):
+        r.ask([])
+    assert r._state["groq"].cooldown_until == 15.0        # overloaded: try again soon
+    assert r._state["gemini"].cooldown_until == 60.0      # rate limited with no hint: wait longer
+    assert r.soonest_available() == 15.0                  # so a patient caller can wait for groq
+
+
+def test_retry_after_header_still_wins_for_server_errors():
+    r = make(lambda req: httpx.Response(503, headers={"retry-after": "7"}), keys={"groq": "k1"}, clock=lambda: 0.0)
+    with pytest.raises(AllProvidersFailed):
+        r.ask([])
+    assert r._state["groq"].cooldown_until == 7.0

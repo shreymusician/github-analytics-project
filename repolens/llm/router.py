@@ -15,7 +15,8 @@ import httpx
 
 from .providers import PROVIDERS, Provider
 
-DEFAULT_COOLDOWN = 60.0   # seconds to bench a provider after a rate limit / outage
+DEFAULT_COOLDOWN = 60.0   # seconds to bench a provider after a rate limit with no Retry-After
+SERVER_ERROR_COOLDOWN = 15.0   # 5xx ("model overloaded", 503) is usually momentary: retry sooner than a rate limit
 MAX_COOLDOWN = 3600.0
 
 
@@ -103,7 +104,8 @@ class LLMRouter:
             st.dead = True
             raise _Skip(f"auth failed ({r.status_code})")
         if r.status_code == 429 or r.status_code >= 500:
-            st.cooldown_until = self.clock() + _retry_after(r)
+            default = SERVER_ERROR_COOLDOWN if r.status_code >= 500 else DEFAULT_COOLDOWN
+            st.cooldown_until = self.clock() + _retry_after(r, default)
             raise _Skip(f"HTTP {r.status_code}")
         if r.status_code >= 400:
             # e.g. model removed or bad request: skip this call, don't bench the provider
@@ -124,8 +126,8 @@ class _Skip(Exception):
         self.reason = reason
 
 
-def _retry_after(r: httpx.Response) -> float:
+def _retry_after(r: httpx.Response, default: float = DEFAULT_COOLDOWN) -> float:
     try:
-        return min(max(float(r.headers.get("retry-after", DEFAULT_COOLDOWN)), 1.0), MAX_COOLDOWN)
+        return min(max(float(r.headers.get("retry-after", default)), 1.0), MAX_COOLDOWN)
     except ValueError:
-        return DEFAULT_COOLDOWN
+        return default
