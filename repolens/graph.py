@@ -14,6 +14,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 from .files import iter_files, read_text
+from .jsgraph import JS_EXTS, build_js_graph
 
 SRC_ROOTS = ("src", "lib", "app")  # common layouts where the package root is one level down
 
@@ -148,9 +149,18 @@ def communities(edges: dict[str, set[str]], iters: int = 30) -> list[list[str]]:
     return sorted((sorted(g) for g in groups.values()), key=lambda g: (-len(g), g[0]))
 
 
+def _is_js(m: str) -> bool:
+    """JS/TS module ids are repo-relative file paths; Python ids are dotted module names."""
+    return m.lower().endswith(JS_EXTS)
+
+
+def _stem(m: str) -> str:
+    return Path(m).stem if _is_js(m) else m.rsplit(".", 1)[-1]
+
+
 def _name_cluster(members: list[str]) -> str:
-    first = Counter(m.split(".")[0] if "." in m else m for m in members).most_common(1)[0][0]
-    return first
+    key = lambda m: (m.rpartition("/")[0] or "(root)") if _is_js(m) else (m.split(".")[0] if "." in m else m)
+    return Counter(key(m) for m in members).most_common(1)[0][0]
 
 
 TRIVIAL_NAMES = {"__about__", "__version__", "_version", "version", "constants", "exceptions", "logger"}
@@ -166,7 +176,7 @@ def substance(root: Path, rel: str) -> int:
     n = 0
     for line in read_text(root / rel).splitlines():
         s = line.strip()
-        if s and not s.startswith(("#", "import ", "from ", "__all__", '"""', "'''", ")", "]", "}")):
+        if s and not s.startswith(("#", "//", "/*", "*", "import ", "from ", "__all__", '"""', "'''", ")", "]", "}")):
             n += 1
     return n
 
@@ -177,7 +187,7 @@ def rank_read_first(root: Path, edges, paths, entries, pr, imported_by) -> list[
     constants/version/logger modules are skipped (everything imports them; they teach nothing)."""
     subst = {m: substance(root, paths[m]) for m in edges}
     cand = [m for m in edges if (imported_by[m] or edges[m] or m in entries)
-            and subst[m] >= MIN_SUBSTANCE and m.rsplit(".", 1)[-1] not in TRIVIAL_NAMES]
+            and subst[m] >= MIN_SUBSTANCE and _stem(m) not in TRIVIAL_NAMES]
     if len(cand) < 5:                      # tiny repo: do not filter, there is little to choose from
         cand = [m for m in edges if imported_by[m] or m in entries]
     if not cand:
@@ -188,23 +198,29 @@ def rank_read_first(root: Path, edges, paths, entries, pr, imported_by) -> list[
 
     def score(m: str) -> float:
         s = 0.5 * pr[m] / max_pr + 0.3 * len(edges[m]) / max_out + 0.2 * subst[m] / max_sub
-        s = s * GENERIC_PENALTY if m.rsplit(".", 1)[-1] in GENERIC_STEMS else s
+        s = s * GENERIC_PENALTY if _stem(m) in GENERIC_STEMS else s
         return s + (0.3 if m in entries else 0)
-    return sorted(cand, key=lambda m: (-score(m), m))
+    ordered = sorted(cand, key=lambda m: (-score(m), m))
+    head = [m for m in ordered if m in entries][:2]            # "start here": the best entry point(s) always lead
+    return head + [m for m in ordered if m not in head]
 
 
 def analyze_architecture(root: Path, top: int = 8) -> dict:
     ext: Counter = Counter()
-    edges, paths, entries = build_graph(root, external=ext)
+    py_edges, paths, entries = build_graph(root, external=ext)
+    js_edges, js_paths, js_entries = build_js_graph(root, external=ext)      # same Counter: third-party imports of both
+    edges, paths, entries = {**py_edges, **js_edges}, {**paths, **js_paths}, entries | js_entries
+    entries = {m for m in entries if not _NON_ENTRY_DIRS.search(paths[m])}      # also for JS/TS entry files
     if not edges:
-        return {"python_modules": 0}
+        return {"python_modules": 0, "js_modules": 0}
     pr = pagerank(edges)
     imported_by = Counter(w for outs in edges.values() for w in outs)
     ranked = rank_read_first(root, edges, paths, entries, pr, imported_by)[:top]
     groups = [g for g in communities(edges) if len(g) > 1]
     n_edges = sum(len(v) for v in edges.values())
     return {
-        "python_modules": len(edges),
+        "python_modules": len(py_edges),
+        "js_modules": len(js_edges),
         "import_edges": n_edges,
         "third_party_imports": [{"module": m, "name": IMPORT_ALIASES.get(m, m), "files": c}
                                 for m, c in sorted(ext.items(), key=lambda kv: (-kv[1], kv[0]))[:15]],
