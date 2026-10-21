@@ -58,7 +58,7 @@ V0 Foundation ──> V1 Single-Repo Brain ──> V2 Trust ──> V3 Find ─�
 | 2.1 | **Labeled calibration set** | Hand-label 30 to 50 repos: complete or not, deployable or not, abandoned or not, difficulty. Store as data in the repo. |
 | 2.2 | Weight calibration | Tune rule weights against the labels; report agreement per signal. Consider a small logistic model *(your own algorithm)* if hand-tuning plateaus. |
 | 2.3 | Confidence levels | Scores come with high/medium/low confidence and say what was not checked. |
-| 2.4 | JS/TS import graph | Parse imports for JavaScript/TypeScript (and `package.json` entry points). Go and Rust later. |
+| 2.4 | JS/TS import graph | **Done early (regex version, D20)**: JavaScript/TypeScript imports, `package.json` entry points. Still to do: a real parser (tree-sitter) for exactness and path aliases; Go, Rust, Java. |
 | 2.5 | Notebook support | Many AI/ML repos are Jupyter-first: extract cells, imports and outputs. |
 | 2.6 | Richer taxonomy | Expand the AI/ML library taxonomy; add pattern detectors (RAG pipeline, training loop, fine-tuning, agent loop). |
 | 2.7 | Regression suite | Frozen expected outputs for the labeled repos; any change that moves scores must be deliberate. |
