@@ -150,6 +150,41 @@ def _name_cluster(members: list[str]) -> str:
     return first
 
 
+TRIVIAL_NAMES = {"__about__", "__version__", "_version", "version", "constants", "exceptions", "logger"}
+MIN_SUBSTANCE = 12
+
+
+def substance(root: Path, rel: str) -> int:
+    """Lines that do something: not blank, comment, import, docstring fence or `__all__`."""
+    n = 0
+    for line in read_text(root / rel).splitlines():
+        s = line.strip()
+        if s and not s.startswith(("#", "import ", "from ", "__all__", '"""', "'''", ")", "]", "}")):
+            n += 1
+    return n
+
+
+def rank_read_first(root: Path, edges, paths, entries, pr, imported_by) -> list[str]:
+    """Where to start reading: entry points, 'hubs' that wire many modules together, and substantial
+    'foundations' that many modules depend on. Bare re-export `__init__.py` files and trivial
+    constants/version/logger modules are skipped (everything imports them; they teach nothing)."""
+    subst = {m: substance(root, paths[m]) for m in edges}
+    cand = [m for m in edges if (imported_by[m] or edges[m] or m in entries)
+            and subst[m] >= MIN_SUBSTANCE and m.rsplit(".", 1)[-1] not in TRIVIAL_NAMES]
+    if len(cand) < 5:                      # tiny repo: do not filter, there is little to choose from
+        cand = [m for m in edges if imported_by[m] or m in entries]
+    if not cand:
+        return []
+    max_pr = max(pr[m] for m in cand) or 1
+    max_out = max(len(edges[m]) for m in cand) or 1
+    max_sub = max(subst[m] for m in cand) or 1
+
+    def score(m: str) -> float:
+        s = 0.5 * pr[m] / max_pr + 0.3 * len(edges[m]) / max_out + 0.2 * subst[m] / max_sub
+        return s + (0.3 if m in entries else 0)
+    return sorted(cand, key=lambda m: (-score(m), m))
+
+
 def analyze_architecture(root: Path, top: int = 8) -> dict:
     ext: Counter = Counter()
     edges, paths, entries = build_graph(root, external=ext)
@@ -157,8 +192,7 @@ def analyze_architecture(root: Path, top: int = 8) -> dict:
         return {"python_modules": 0}
     pr = pagerank(edges)
     imported_by = Counter(w for outs in edges.values() for w in outs)
-    # modules nobody imports only qualify if they are entry points; otherwise PageRank ties are noise
-    ranked = sorted((m for m in pr if imported_by[m] or m in entries), key=lambda m: (-pr[m], m))[:top]
+    ranked = rank_read_first(root, edges, paths, entries, pr, imported_by)[:top]
     groups = [g for g in communities(edges) if len(g) > 1]
     n_edges = sum(len(v) for v in edges.values())
     return {
@@ -168,7 +202,7 @@ def analyze_architecture(root: Path, top: int = 8) -> dict:
                                 for m, c in sorted(ext.items(), key=lambda kv: (-kv[1], kv[0]))[:15]],
         "entry_points": sorted(paths[m] for m in entries),
         "read_first": [{"file": paths[m], "importance": round(pr[m] * len(pr), 2),
-                        "imported_by": imported_by[m]} for m in ranked],
+                        "imported_by": imported_by[m], "imports": len(edges[m])} for m in ranked],
         "subsystems": [{"name": _name_cluster(g), "size": len(g),
                         "files": [paths[m] for m in g[:6]]} for g in groups[:6]],
         "isolated_modules": sorted(paths[m] for m in edges

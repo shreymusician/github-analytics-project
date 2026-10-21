@@ -67,7 +67,9 @@ def test_graph_core_and_entrypoint(repo):
     assert max(pr, key=pr.get) == "app.core"          # most depended-on module ranks first
     assert abs(sum(pr.values()) - 1) < 1e-6
     arch = graph.analyze_architecture(repo)
-    assert arch["read_first"][0]["file"] == "app/core.py"
+    files = [r["file"] for r in arch["read_first"]]
+    assert files[0] == "app/main.py"                      # start at the entry point...
+    assert "app/core.py" in files[:3]                     # ...then the most depended-on module
 
 
 def test_communities_split_disconnected_clusters():
