@@ -12,7 +12,7 @@ from .redact import redact
 from .storage import Store
 
 # Bump when analyzer output or the narration prompt changes: cached artifacts from older versions are ignored.
-ANALYZER_VERSION = 5
+ANALYZER_VERSION = 6
 K_ANALYSIS, K_NARRATIVE = f"analysis.v{ANALYZER_VERSION}", f"narrative.v{ANALYZER_VERSION}"
 
 README_CHARS, EXCERPT_CHARS, EXCERPT_LINES, EXCERPTS = 1500, 1200, 60, 3
