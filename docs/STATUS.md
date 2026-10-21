@@ -2,7 +2,7 @@
 
 Last updated: 2026-10-21 (V1: code complete; Gate A machine-verified, human review waived by owner, see DECISIONS D18)
 
-## Built and tested (111 tests passing)
+## Built and tested (126 tests passing)
 
 | Component | File | Notes |
 |---|---|---|
@@ -22,6 +22,7 @@ Last updated: 2026-10-21 (V1: code complete; Gate A machine-verified, human revi
 | Third-party import detection | `repolens/graph.py` | Works without any manifest; alias map (PIL -> Pillow); import-derived capability tags |
 | External signals (fail-soft) | `repolens/external.py` | GitHub facts (+ ecosyste.ms fallback), OpenSSF Scorecard, repo search and manifest deps (V3 helpers). Live-tested; `--offline` skips |
 | Citation grounding | `repolens/narrate.py` | Names/files/numbers must exist in the packet; wrong citations repaired, unsupported statements dropped with reasons (D13) |
+| Notebook reader | `repolens/notebooks.py` | Outline, imports, reading view (sources only, never outputs, never executed); imports merged into the third-party counter; notebook-first repos get notebooks explained (D21) |
 | JS/TS import graph | `repolens/jsgraph.py`, merged in `graph.py` | Regex-based (D20); entry points, read-first, third-party imports, capability tags for TypeScript repos |
 | "How it works" stage | `repolens/architecture.py` | Reads up to 6 source excerpts (any language), cited S-IDs, shared grounding rules; opt-in `run(architecture=True)`; all 10 Gate A repos have one |
 | Fact-check vs GitHub | `repolens/factcheck.py`, `scripts/fact_check.py` | Independent file-list / commit-date checks; 78 of 80 facts agree on the Gate A repos |
@@ -73,7 +74,16 @@ Still unverified: whether a human finds the reports insightful and accurate. Tha
 - The first grounding version dropped a true statement because the model cited the wrong ID; fixed by repairing citations (D13).
 - Not yet run: the GitHub clone path, the external signals inside a full `run()` on a real GitHub repo, and Gemini narration after the grounding change (Gemini was tested before it).
 
-## Latest Gate A set (analyzer version 13)
+## Latest Gate A set (analyzer version 16)
+10/10 narrated, 10/10 with a "How it works" section, 0 crashes, **0 dropped statements**, warm runs about 5 s. Notebook-first repos (Reinforcement-Learning, how-to-train-your-gpt, roboflow/sports) now get capability tags and explanations that draw on their notebooks. Reading the earlier version-13 set below for the audit caveat.
+
+Bugs found and fixed this round (each with a regression test and a commit message explaining it):
+- sibling scripts imported by bare name (`import neural_net`) were listed as third-party libraries;
+- tests led the read-first lists;
+- Gemini wrote evidence IDs without quotes (`[E38,E41]`), losing two narrations on every attempt (D22);
+- an uncited audience was counted as an error; "PyTorch" vs the import name `torch` was flagged as invented.
+
+## Earlier Gate A set (analyzer version 13)
 10/10 narrated, 10/10 with a "How it works" section, 0 crashes, warm runs about 5 to 15 s. Read-first lists no longer contain test files, docs/debug scripts or generic utils-first noise. llm-scraper (TypeScript) now has a graph, an entry point first and a cited explanation.
 
 **Audit caveat for this set:** the second-model audit of the latest set judged 183 claims (182 supported, 1 partly), but ALL of those audits were self-graded (judge = narrator, Gemini) because Groq's rolling daily budget was almost spent by development testing, so only a trickle was available. Treat that run as weak evidence. The earlier run where judges were independent (103 claims, 102 supported, planted-falsehood control 3/3) is the stronger evidence. A third provider (for example an OpenRouter key) would make independent audits reliable.
@@ -83,7 +93,7 @@ Still unverified: whether a human finds the reports insightful and accurate. Tha
 - Audit independence: when the other provider is unavailable the judge can be the narrator; this is flagged per audit (`independent: False`), never hidden. On the last run Groq's DAILY budget (200,000 tokens) was exhausted by development testing, so most audits were self-graded until it reset.
 - `.txt` over 100 KB is classified as data (heuristic); a long hand-written .txt would be misclassified.
 - Path index is capped at 4,000 paths per profile; very large repos are indexed partially.
-- The import graph covers Python and JavaScript/TypeScript (regex, no alias resolution); stub/TODO checks cover Python only. Notebook-heavy repos and Go/Rust/Java get "partial" analysis; notebooks are not parsed into the graph yet.
+- The import graph covers Python and JavaScript/TypeScript (regex, no alias resolution); stub/TODO checks cover Python only. Go/Rust/Java get "partial" analysis. Notebooks are read for outline, imports and a reading view but are not nodes in the import graph.
 - Maturity labels come from the model and can disagree with the numeric scores.
 - Gemini free-tier model health changes by the hour: the default is now gemini-3.5-flash-lite because gemini-3.1-flash-lite returned 503 for audit-sized requests.
 - Groq free tier: 8,000 tokens per minute is the binding limit for batch runs, not the daily cap.
