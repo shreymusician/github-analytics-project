@@ -50,3 +50,10 @@ def test_notable_files_include_source_files_of_any_language():
     assert "src/index.ts" in n and "src/models.ts" in n and "README.md" in n and "package.json" in n
     assert "tests/a.test.ts" not in n and "logo.png" not in n            # tests and binaries are not reading suggestions
     assert n.index("src/index.ts") < n.index("src/deep/nested/util.ts")  # shallow files first
+
+
+def test_large_txt_files_are_data_not_docs():
+    c = stack.file_census([("splits/train_files.txt", 600_000), ("notes.txt", 2_000), ("README.md", 3_000), ("a.py", 5_000)])
+    assert c["categories"]["data"]["files"] == 1 and c["categories"]["docs"]["files"] == 2
+    assert c["authored"].get("docs", 0) < 0.6          # the big list no longer makes this a "docs" repo
+    assert "data" not in c["authored"] and c["assets_share_bytes"] > 0.9

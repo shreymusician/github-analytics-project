@@ -170,6 +170,9 @@ LOCKFILES = {"poetry.lock", "package-lock.json", "yarn.lock", "pnpm-lock.yaml", 
 
 CODE_EXTS = {e for e, lang in LANG_BY_EXT.items() if lang not in ("HTML", "CSS", "Jupyter", "SQL", "Shell")}
 
+# A .txt larger than this is treated as data (monodepth2's train/val split lists made it look 98.7% "docs").
+LARGE_TXT_BYTES = 100_000
+
 # Binary assets and data blobs swamp byte counts (screenshots, checkpoints) without describing the project.
 ASSET_CATEGORIES = {"media", "model-weights", "other", "data"}
 
@@ -199,6 +202,8 @@ def file_census(files: list[tuple[str, int]]) -> dict:
         if Path(rel).name.lower() == "desktop.ini":
             continue
         cat = CATEGORY_BY_EXT.get(suffix, "other")
+        if suffix == ".txt" and size > LARGE_TXT_BYTES:
+            cat = "data"        # big text files are split lists / corpora / logs, not prose someone wrote
         cat_bytes[cat] += size
         cat_files[cat] += 1
         exts.setdefault(cat, Counter())[suffix or "(none)"] += 1
