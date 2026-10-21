@@ -1,8 +1,8 @@
 # Status
 
-Last updated: 2026-10-21 (V1 in progress)
+Last updated: 2026-10-21 (V1: code complete, awaiting human Gate A review)
 
-## Built and tested (42 tests passing)
+## Built and tested (57 tests passing)
 
 | Component | File | Notes |
 |---|---|---|
@@ -25,14 +25,14 @@ Last updated: 2026-10-21 (V1 in progress)
 | Provider smoke test | `repolens/llm/smoke.py` | `python -m repolens.llm.smoke` (needs keys; **not yet run**) |
 
 ## V1 checklist (see ROADMAP.md)
-- [~] 1.1 Provider smoke test: **Groq OK** (`openai/gpt-oss-120b`), **Gemini OK** (`gemini-3.1-flash-lite`). **Real failover verified** (invalid Groq key -> marked dead -> Gemini answered). Gemini produced valid cited narration JSON in 2.3s. OpenRouter and GitHub Models untested (no keys).
-- [ ] 1.2 Verify GitHub clone path: **waiting on permission to download a public repo**
+- [x] 1.1 Provider smoke test (Groq and Gemini; OpenRouter/GitHub Models not configured): **Groq OK** (`openai/gpt-oss-120b`), **Gemini OK** (`gemini-3.1-flash-lite`). **Real failover verified** (invalid Groq key -> marked dead -> Gemini answered). Gemini produced valid cited narration JSON in 2.3s. OpenRouter and GitHub Models untested (no keys).
+- [x] 1.2 GitHub clone path verified: 10 real repos partial-cloned and analyzed, 0 crashes (clone time not yet measured separately)
 - [x] 1.3 Evidence packet builder
 - [x] 1.4 LLM narration with enforced citations. Ran once against real Groq on a local project; see findings below.
 - [x] 1.5 Cache by repo + commit SHA
 - [x] 1.6 Report renderer
 - [x] 1.7 Graceful degradation (no keys / all providers fail -> deterministic report)
-- [ ] Gate A exit test: 10 varied public AI/ML repos, human-judged. Needs 1.1 and 1.2 first.
+- [~] Gate A exit test: reports for the 10 repos are generated (`reports/gate_a/`, see docs/GATE_A.md); **waiting for the human review and scoring**. Not passed yet.
 
 Tests use synthetic repos created on the fly (no network). One real-world run was done on a local project (`mini_proj`, a presentation project): the scores and reasons were sensible, and the run surfaced two bugs, now fixed (non-git folders crashed the analyzer; a package named `app` was flagged as an entry point).
 
@@ -46,6 +46,13 @@ Tests use synthetic repos created on the fly (no network). One real-world run wa
 ## GitHub token (verified 2026-10-21)
 Fine-grained, public-read-only token works: 5,000 core requests/hour, **search 30/min**, **code search only 10/min**. Code search is the tight one: V3's dependency-graph search (3.1) must batch, cache and back off, not fire a query per candidate. Not used by V1 (clones use plain `git`).
 
+## Gate A run on 10 real repos (2026-10-21)
+Result of the machine side: 10/10 analyzed, 10/10 narrated, 0 crashes, 1 statement dropped by grounding. Warm-cache runs 5 to 28 s; cold (with clone) up to 162 s.
+
+The first run exposed nine defects that 42 synthetic tests had not (asset-skewed composition, missed setup.py manifests, over-confident scores on non-Python repos, false tests/stubs, noisy read-first lists, rejected non-Python reading suggestions, over-strict number grounding, rate-limit failures, stale cache after analyzer changes). All are fixed with regression tests; the per-fix reasoning is in the commit messages. Lesson: tests built from my own assumptions missed what ten real repos found in one afternoon.
+
+Still unverified: whether a human finds the reports insightful and accurate. That is the actual Gate A question.
+
 ## Model-name rot (real example)
 `gemini-2.5-flash` returned 404 for a new account ("no longer available to new users"). The `gemini-flash-latest` alias timed out (>90s), `gemini-3.8-flash` took 65s, `gemini-3.1-flash-lite` took 4s. Latency on free tiers varies widely. Defaults are verified only on the date above: expect to re-check with `python -m repolens.llm.smoke`, and override via `GEMINI_MODEL` / `GROQ_MODEL` in `.env`.
 
@@ -55,6 +62,10 @@ Fine-grained, public-read-only token works: 5,000 core requests/hour, **search 3
 - Not yet run: the GitHub clone path, the external signals inside a full `run()` on a real GitHub repo, and Gemini narration after the grounding change (Gemini was tested before it).
 
 ## Known limitations
+- Large `.txt` files (e.g. monodepth2 split lists) are classified as docs, inflating "docs" share; they are data.
+- The import graph and stub/TODO checks cover Python only; notebook-heavy and non-Python repos get "partial" analysis and no read-first list.
+- Maturity labels come from the model and can disagree with the numeric scores.
+- Groq free tier: 8,000 tokens per minute is the binding limit for batch runs, not the daily cap.
 - Scoring weights are first guesses. Need calibration on about 30 hand-labeled repos.
 - Import graph is Python only; no JS/TS/Go.
 - LLM narration is built but has **never run against a real model**; prompt quality is unverified.
