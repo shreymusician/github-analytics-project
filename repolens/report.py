@@ -1,6 +1,7 @@
 """Render a Markdown report. Works with or without LLM narration."""
 from __future__ import annotations
 
+from .architecture import evidence_lines as arch_evidence_lines
 from .evidence import build_packet
 
 
@@ -34,6 +35,15 @@ def render(result: dict) -> str:
         if st["primary_language"]:
             L += [f"A {st['primary_language']} project"
                   + (f" with capabilities: {', '.join(st['capability_tags'][:6])}." if st["capability_tags"] else "."), ""]
+
+    arch = (result.get("architecture") or {}).get("architecture")
+    if arch and (arch["how_it_works"] or arch["components"]):
+        L += ["## How it works", ""]
+        L += [f"{i}. {x['text']}{_cite(x)}" for i, x in enumerate(arch["how_it_works"], 1)]
+        if arch["components"]:
+            L += ["", "**Key parts**", ""]
+            L += [f"- `{c['file']}` **{c['name']}**: {c['role']}{_cite(c)}" for c in arch["components"]]
+        L += [""]
 
     L += ["## Scores", "",
           f"- Completeness: **{p['completeness']['score']}/100** `{_bar(p['completeness']['score'])}`",
@@ -94,5 +104,11 @@ def render(result: dict) -> str:
         L += ["---", f"_Narration by {nar['provider']}; {nar['dropped']} unsupported statement(s) dropped. "
                      "Bracketed IDs reference the evidence below._", "", "<details><summary>Evidence</summary>", ""]
         L += [f"- **{it['id']}** {it['text'].splitlines()[0][:200]}" for it in build_packet(p)["items"]]
+        L += ["", "</details>"]
+    if arch and (arch["how_it_works"] or arch["components"]):
+        a = result["architecture"]
+        L += ["", f"_\"How it works\" by {a['provider']}; {a['dropped']} unsupported statement(s) dropped. "
+                  "S-IDs reference the source evidence below._", "", "<details><summary>Source evidence</summary>", ""]
+        L += arch_evidence_lines(p)
         L += ["", "</details>"]
     return "\n".join(L) + "\n"

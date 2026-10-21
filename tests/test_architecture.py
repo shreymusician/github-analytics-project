@@ -102,3 +102,16 @@ def test_pipeline_stage_is_opt_in_cached_and_not_cached_when_empty(repo):
     assert r["architecture"]["architecture"]["how_it_works"] == []
     r2 = profile.run(str(repo), store=store, router=FakeRouter(reply(packet)), architecture=True)   # narrative cached; arch retried
     assert r2["cache"]["architecture"] == "miss" and r2["architecture"]["architecture"]["how_it_works"]
+
+
+def test_report_shows_how_it_works_with_citations_and_source_evidence(repo):
+    from repolens import evidence
+    from repolens.report import render
+    from tests.test_v1 import good_reply
+    p, packet = pk(repo)
+    res = profile.run(str(repo), router=FakeRouter(good_reply(evidence.build_packet(p)), reply(packet)), architecture=True)
+    md = render(res)
+    assert "## How it works" in md and "1. core() returns a constant value." in md and "[S" in md
+    assert "**Key parts**" in md and "`app/core.py` **core**" in md and "Source evidence" in md
+    plain = render(profile.run(str(repo)))                                        # no stage, no section, no crash
+    assert "## How it works" not in plain
