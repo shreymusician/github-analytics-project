@@ -261,3 +261,17 @@ def test_prompt_tells_the_model_not_to_guess_the_audience_and_null_audience_is_h
     reply["audience"] = None                                  # what the model should return when nothing states it
     out = narrate(pk, FakeRouter(json.dumps(reply)))
     assert out["narrative"]["audience"] is None and out["dropped"] == 0     # null is valid, not a dropped statement
+
+
+def test_parser_repairs_unquoted_evidence_ids_and_tolerates_raw_newlines():
+    """Real failure: Gemini wrote "evidence":[E38,E41] (no quotes) for lightly and picoGPT on every attempt, so
+    their narration was lost even after the retry."""
+    from repolens.narrate import _parse
+    bad = '{"summary":{"text":"A library.","evidence":[E38,E41]},\n "scope":{"text":"Mentions [E3] in prose.","evidence":["E1", E2]}}'
+    got = _parse(bad)
+    assert got["summary"]["evidence"] == ["E38", "E41"] and got["scope"]["evidence"] == ["E1", "E2"]
+    assert got["scope"]["text"] == "Mentions [E3] in prose."                       # text outside the array is untouched
+    assert _parse('{"a": {"text": "line one\nline two", "evidence": ["S1"]}}')["a"]["evidence"] == ["S1"]   # raw newline in a string
+    assert _parse('```json\n{"x": {"evidence":[S2,S9]}}\n```')["x"]["evidence"] == ["S2", "S9"]              # fenced and unquoted
+    assert _parse("Sure! here you go: " + bad + " hope it helps")["summary"]["evidence"] == ["E38", "E41"]   # chatter around it
+    assert _parse("not json at all") is None and _parse('{"evidence": [broken') is None and _parse("[1, 2]") is None

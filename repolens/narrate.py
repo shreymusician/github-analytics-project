@@ -80,17 +80,29 @@ def _parse(text: str) -> dict | None:
     m = re.search(r"```(?:json)?\s*(.*?)```", text, re.S)
     if m:
         text = m.group(1).strip()
-    try:
-        data = json.loads(text)
-    except ValueError:
-        start, end = text.find("{"), text.rfind("}")
-        if start < 0 or end <= start:
-            return None
-        try:
-            data = json.loads(text[start:end + 1])
-        except ValueError:
-            return None
-    return data if isinstance(data, dict) else None
+    start, end = text.find("{"), text.rfind("}")
+    candidates = [text] + ([text[start:end + 1]] if 0 <= start < end else [])
+    for cand in candidates:
+        for fixed in (cand, _quote_bare_ids(cand)):          # second try repairs the known unquoted-ID mistake
+            try:
+                data = json.loads(fixed, strict=False)       # strict=False tolerates raw newlines/tabs inside strings
+            except ValueError:
+                continue
+            return data if isinstance(data, dict) else None
+    return None
+
+
+_EVIDENCE_ARRAY = re.compile(r'("evidence"\s*:\s*)\[([^\]]*)\]')
+_BARE_ID = re.compile(r"^[ES]\d+$")
+
+
+def _quote_bare_ids(text: str) -> str:
+    """Repair `"evidence":[E38,E41]` (a mistake Gemini makes: IDs without quotes) into `"evidence":["E38","E41"]`.
+    Only the contents of "evidence" arrays are touched, so statement text that mentions an ID is left alone."""
+    def fix(m: re.Match) -> str:
+        items = [i.strip() for i in m.group(2).split(",") if i.strip()]
+        return m.group(1) + "[" + ",".join(f'"{i}"' if _BARE_ID.match(i) else i for i in items) + "]"
+    return _EVIDENCE_ARRAY.sub(fix, text)
 
 
 _CITE_TOKEN = re.compile(r"\[?\b[ES]\d+\b\]?")                                 # E38, [E38], S3 (architecture stage)
