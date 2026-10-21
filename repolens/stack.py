@@ -168,6 +168,8 @@ MANIFESTS = {
 LOCKFILES = {"poetry.lock", "package-lock.json", "yarn.lock", "pnpm-lock.yaml", "pipfile.lock",
              "uv.lock", "cargo.lock", "go.sum", "conda-lock.yml"}
 
+CODE_EXTS = {e for e, lang in LANG_BY_EXT.items() if lang not in ("HTML", "CSS", "Jupyter", "SQL", "Shell")}
+
 # Binary assets and data blobs swamp byte counts (screenshots, checkpoints) without describing the project.
 ASSET_CATEGORIES = {"media", "model-weights", "other", "data"}
 
@@ -234,6 +236,10 @@ def notable_files(paths: list[str]) -> list[str]:
     out += sorted(p for p in paths if "/" not in p and p.lower().endswith((".md", ".rst")) and p not in out)[:8]
     out += sorted(p for p in paths if p.lower().startswith("docs/") and p.lower().endswith((".md", ".rst")))[:8]
     out += sorted(p for p in paths if p.rsplit("/", 1)[-1].lower() in MANIFESTS or p.rsplit("/", 1)[-1].lower() == "dockerfile")[:6]
+    # Source files in any language, shallowest first: the import graph only understands Python, so for other
+    # languages this is the only way a reading suggestion (e.g. src/index.ts) can be recognized as a real file.
+    code = [p for p in paths if Path(p).suffix.lower() in CODE_EXTS and "test" not in p.lower()]
+    out += sorted(code, key=lambda p: (p.count("/"), p))[:25]
     return list(dict.fromkeys(out))
 
 

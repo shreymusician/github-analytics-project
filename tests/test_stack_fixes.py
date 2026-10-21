@@ -41,3 +41,12 @@ def test_notebook_size_counts_source_not_outputs(tmp_path):
     p.write_text(json.dumps(nb), encoding="utf-8")
     assert stack.notebook_source_bytes(p) == len("print(1)\n")
     assert stack.notebook_source_bytes(tmp_path / "missing.ipynb") is None
+
+
+def test_notable_files_include_source_files_of_any_language():
+    paths = ["README.md", "src/index.ts", "src/models.ts", "src/deep/nested/util.ts", "tests/a.test.ts",
+             "notebooks/a.ipynb", "package.json", "logo.png"]
+    n = stack.notable_files(paths)
+    assert "src/index.ts" in n and "src/models.ts" in n and "README.md" in n and "package.json" in n
+    assert "tests/a.test.ts" not in n and "logo.png" not in n            # tests and binaries are not reading suggestions
+    assert n.index("src/index.ts") < n.index("src/deep/nested/util.ts")  # shallow files first
