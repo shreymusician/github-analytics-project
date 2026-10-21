@@ -17,7 +17,7 @@ from .llm.router import AllProvidersFailed
 from .narrate import _parse, ask_with_patience
 
 VERDICTS = ("supported", "partly", "unsupported", "contradicted")
-JUDGE_MAX_TOKENS = 3000
+JUDGE_MAX_TOKENS = 1500
 
 SYSTEM = """You are a strict fact-checker for automated repository reports.
 You get numbered EVIDENCE (facts produced by analyzers) and CLAIMS that an assistant wrote about the repository.
