@@ -15,6 +15,10 @@ import time
 from .evidence import packet_text
 from .llm.router import AllProvidersFailed
 
+# Providers count max_tokens against per-minute token budgets *before* generating (Groq free: 8,000/min).
+# Real narration JSON is under ~1,000 tokens plus some reasoning, so keep the reservation modest.
+NARRATE_MAX_TOKENS = 2500
+
 MATURITY = {"prototype", "working-demo", "usable", "production-like", "unknown"}
 
 SYSTEM = """You analyze software repositories for people who want to learn from them.
@@ -59,13 +63,13 @@ def _ask_with_patience(router, messages, max_wait: float, sleep):
     """Free tiers rate-limit in bursts. If every provider failed but one will be usable again shortly, wait once
     and retry instead of giving up on a narration that is a few seconds away."""
     try:
-        return router.ask(messages, json_mode=True, max_tokens=4000)
+        return router.ask(messages, json_mode=True, max_tokens=NARRATE_MAX_TOKENS)
     except AllProvidersFailed:
         wait = getattr(router, "soonest_available", lambda: None)()
         if wait is None or wait > max_wait:
             raise
         sleep(wait + 1)
-        return router.ask(messages, json_mode=True, max_tokens=4000)
+        return router.ask(messages, json_mode=True, max_tokens=NARRATE_MAX_TOKENS)
 
 
 def _parse(text: str) -> dict | None:

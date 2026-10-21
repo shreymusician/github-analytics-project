@@ -212,3 +212,17 @@ def test_old_version_cache_entries_are_ignored(repo):
     store.put(rid, sha, "analysis", {"stale": True})            # what an older version would have stored
     res = profile.run(str(repo), store=store)
     assert res["cache"]["analysis"] == "miss" and "stale" not in res["profile"]
+
+
+def test_narration_reserves_a_modest_token_budget(prof):
+    """Groq's free tier counts max_tokens against an 8,000 tokens/minute budget up front, so an oversized
+    reservation causes 429s even when the real output is small."""
+    seen = {}
+
+    class Spy:
+        def ask(self, messages, **kw):
+            seen.update(kw)
+            return good_reply(evidence.build_packet(prof)), "fake"
+
+    narrate(evidence.build_packet(prof), Spy())
+    assert seen["max_tokens"] <= 3000 and seen["json_mode"] is True
