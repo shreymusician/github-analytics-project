@@ -41,10 +41,12 @@ def claims_of(narrative: dict) -> list[dict]:
     m = narrative.get("maturity")
     if m:
         out.append({"id": "maturity", "text": f"Maturity is '{m['level']}'. {m['text']}"})
-    for key in ("how_to_run", "learning_path", "caveats"):
+    for key in ("how_to_run", "learning_path", "caveats", "how_it_works"):
         for i, item in enumerate(narrative.get(key) or []):
             text = f"Read {item['file']}: {item['text']}" if key == "learning_path" else item["text"]
             out.append({"id": f"{key}.{i}", "text": text})
+    for i, c in enumerate(narrative.get("components") or []):          # from the "how it works" stage
+        out.append({"id": f"components.{i}", "text": f"{c['name']} ({c['file']}): {c['role']}"})
     return out
 
 

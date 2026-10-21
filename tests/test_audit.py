@@ -81,3 +81,12 @@ def test_failures_return_none_and_empty_narration_is_trivial(repo):
     empty = {"narrative": {"summary": None, "scope": None, "audience": None, "maturity": None,
                            "how_to_run": [], "learning_path": [], "caveats": []}, "provider": "groq"}
     assert audit.audit(pk, empty, JudgeRouter())["claims"] == 0         # nothing to judge, no model call
+
+
+def test_how_it_works_statements_and_components_are_audited_too(repo):
+    pk, nar = setup(repo)
+    nar["narrative"]["how_it_works"] = [{"text": "core() returns a constant.", "evidence": ["S1"]}]
+    nar["narrative"]["components"] = [{"name": "core", "file": "app/core.py", "role": "holds core()", "evidence": ["S1"]}]
+    claims = {c["id"]: c["text"] for c in audit.claims_of(nar["narrative"])}
+    assert claims["how_it_works.0"] == "core() returns a constant."
+    assert claims["components.0"] == "core (app/core.py): holds core()"

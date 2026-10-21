@@ -9,7 +9,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv(".env")
-from repolens import audit, evidence
+from repolens import architecture, audit, evidence
 from repolens.llm.router import LLMRouter, keys_from_env
 
 REPORTS = Path("reports/gate_a")
@@ -27,6 +27,19 @@ def main() -> int:
             continue
         out = audit.audit(evidence.build_packet(d["profile"]), d["narrative"], router)
         results[repo] = out
+        if d.get("architecture"):                                   # also audit the "how it works" stage
+            a = d["architecture"]
+            arch_out = audit.audit(architecture.build_packet(d["profile"]),
+                                   {"narrative": a["architecture"], "provider": a["provider"]}, router)
+            results[repo + " [how it works]"] = arch_out
+            if arch_out:
+                c = arch_out["counts"]
+                print(f"{repo + ' [arch]':38} {arch_out['claims']:>6} {c.get('supported', 0):>3} {c.get('partly', 0):>4} "
+                      f"{c.get('unsupported', 0):>5} {c.get('contradicted', 0):>6} {str(arch_out['judge']):>7} {str(arch_out['independent']):>5}")
+                for k, v in c.items():
+                    tot[k] = tot.get(k, 0) + v
+            else:
+                print(f"{repo + ' [arch]':38} AUDIT FAILED")
         if out is None:
             print(f"{repo:38} AUDIT FAILED (no judge answered)")
             continue
