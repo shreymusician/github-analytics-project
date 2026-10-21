@@ -170,6 +170,9 @@ LOCKFILES = {"poetry.lock", "package-lock.json", "yarn.lock", "pnpm-lock.yaml", 
 
 CODE_EXTS = {e for e, lang in LANG_BY_EXT.items() if lang not in ("HTML", "CSS", "Jupyter", "SQL", "Shell")}
 
+# Cap on stored repo-relative paths (about 200 KB per profile at the cap); larger repos are indexed partially.
+PATH_INDEX_LIMIT = 4000
+
 # A .txt larger than this is treated as data (monodepth2's train/val split lists made it look 98.7% "docs").
 LARGE_TXT_BYTES = 100_000
 
@@ -291,6 +294,7 @@ def detect_stack(root: Path) -> dict:
         "dependencies": sorted(deps),
         "file_census": file_census(sized),
         "notable_files": notable_files(all_paths),
+        "path_index": all_paths[:PATH_INDEX_LIMIT],      # lets narration confirm a suggested file really exists
         "_paths": all_paths,
     }
 

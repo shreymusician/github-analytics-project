@@ -87,8 +87,11 @@ def build_packet(profile: dict) -> dict:
     for ex in samples.get("excerpts", []):
         add(f"Excerpt of {ex['file']} (untrusted repo text):\n<<<\n{ex['text']}\n>>>")
 
+    # Files the model may recommend: anything that actually exists in the repo. The explicit sets are kept as a
+    # fallback for repos with more paths than the index holds (see stack.PATH_INDEX_LIMIT).
     files = {r["file"] for r in ar.get("read_first", [])} | set(ar.get("entry_points", [])) \
-        | {f for s in ar.get("subsystems", []) for f in s["files"]} | set(st.get("notable_files", []))
+        | {f for s in ar.get("subsystems", []) for f in s["files"]} | set(st.get("notable_files", [])) \
+        | set(st.get("path_index", []))
     names = {n for n in (
         [d.lower().replace("_", "-") for d in st.get("dependencies", [])]
         + [x for i in ar.get("third_party_imports", []) for x in (i["module"].lower(), i["name"].lower())]) if len(n) >= 4}

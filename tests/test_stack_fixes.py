@@ -57,3 +57,16 @@ def test_large_txt_files_are_data_not_docs():
     assert c["categories"]["data"]["files"] == 1 and c["categories"]["docs"]["files"] == 2
     assert c["authored"].get("docs", 0) < 0.6          # the big list no longer makes this a "docs" repo
     assert "data" not in c["authored"] and c["assets_share_bytes"] > 0.9
+
+
+def test_any_real_file_is_a_valid_suggestion_but_invented_ones_are_not(tmp_path):
+    from repolens import evidence, profile
+    from tests.test_analyzers import sh
+    sh(tmp_path, "init", "-q")
+    write(tmp_path, "chapters/03_embeddings.md", "# Embeddings\n")           # a tutorial whose content is not code
+    write(tmp_path, "app.py", "x = 1\n")
+    sh(tmp_path, "add", "-A")
+    sh(tmp_path, "commit", "-qm", "x")
+    files = set(evidence.build_packet(profile.analyze(str(tmp_path)))["files"])
+    assert "chapters/03_embeddings.md" in files and "app.py" in files
+    assert "chapters/09_made_up.md" not in files and "main.py" not in files
