@@ -143,30 +143,37 @@ def _cited(item, ids: set[str]) -> bool:
     return isinstance(ev, list) and bool(ev) and all(isinstance(e, str) and e in ids for e in ev)
 
 
+def check_statement(item, ids: set[str], texts: dict[str, str], names: set[str]) -> str | None:
+    """Return None if the statement may be kept, else the reason it must be dropped.
+
+    A statement is kept only if it cites real evidence IDs and every name/number in it exists in the evidence.
+    If a name/number exists in the packet but not in the cited items, the citation is REPAIRED in place (the
+    item's "evidence" list gains the right ID) instead of discarding a true statement. Shared by the narration
+    and the architecture stage so both obey exactly the same grounding rules.
+    """
+    if not _cited(item, ids):
+        return "missing/unknown citation"
+    missing = ungrounded(item["text"], " ".join(texts.values()), names)
+    if missing:
+        return "not in any evidence: " + ", ".join(missing)
+    for tok in ungrounded(item["text"], " ".join(texts[e] for e in item["evidence"]), names):
+        home = next((i for i, t in texts.items() if not ungrounded(tok, t, names)), None)
+        if home and home not in item["evidence"]:
+            item["evidence"] = [*item["evidence"], home]
+    return None
+
+
 def _validate(data: dict, ids: set[str], files: set[str], texts: dict[str, str], names: set[str]):
     dropped, detail = 0, []
     out: dict = {}
 
-    all_text = " ".join(texts.values())
-
     def check(item, label: str) -> bool:
-        """Keep a statement only if every name/number in it exists in the evidence. If it exists in the packet
-        but not in the cited items, repair the citation instead of discarding a true statement."""
         nonlocal dropped
-        if not _cited(item, ids):
+        why = check_statement(item, ids, texts, names)
+        if why:
             dropped += 1
-            detail.append({"where": label, "why": "missing/unknown citation"})
-            return False
-        missing = ungrounded(item["text"], all_text, names)
-        if missing:
-            dropped += 1
-            detail.append({"where": label, "why": "not in any evidence: " + ", ".join(missing)})
-            return False
-        for tok in ungrounded(item["text"], " ".join(texts[e] for e in item["evidence"]), names):
-            home = next((i for i, t in texts.items() if not ungrounded(tok, t, names)), None)
-            if home and home not in item["evidence"]:
-                item["evidence"] = [*item["evidence"], home]
-        return True
+            detail.append({"where": label, "why": why})
+        return why is None
 
     for key in ("summary", "scope", "audience"):
         v = data.get(key)
