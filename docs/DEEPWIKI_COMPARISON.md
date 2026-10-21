@@ -28,3 +28,13 @@ Date: 2026-10-21. Three repos, DeepWiki **overview pages only**, read through th
 - Read several sub-pages per repo (not just the overview), including any testing, deployment and maintenance sections.
 - Try more repos, including abandoned and notebook-heavy ones (only three were checked, all of which DeepWiki had indexed).
 - Have someone who did not build RepoLens judge both side by side. That is what the Gate A human review is for.
+
+## Addendum: after adding the "How it works" stage (same day)
+
+We added a stage that reads key source files in any language and explains the flow with citations (`repolens/architecture.py`). Read on the same three repos:
+
+- **llm-scraper (TypeScript): the gap closed a lot.** From no architecture at all to a four-step flow (initialize with a model client, preprocess a Playwright page in the requested format, send the cleaned content to the model through the Vercel AI SDK) plus four named parts with their files. Comparable in substance to DeepWiki's overview for this small repo.
+- **snips-nlu: better but still shallower than DeepWiki.** Right components (the engine, the featurizer, resources), but the first step is about documentation scripts being "entry points", and one named part ("Common Utilities") is not interesting.
+- **chonkie: still misses the point.** It explains the API, CLI and embeddings but never the chunkers, which are the whole library. The file picker favored well-imported glue files (`__init__.py`, CLI helpers) over the core `chunker/` code that DeepWiki's page is built around.
+
+So the explanation layer is now present everywhere and decent on small repos, but it depends on picking the right files, and that is the weak link. Every statement is cited and passed grounding, but a cited explanation can still leave out the main idea.
