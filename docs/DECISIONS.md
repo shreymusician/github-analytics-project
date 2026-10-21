@@ -84,6 +84,13 @@ The pipeline combines: (1) lazy analysis, (2) a live discovery agent, (3) depend
 **Honest limits:** the facts are easy and the rules are simple on both sides; the judge sees the same evidence the narrator saw; four planted claims show sensitivity to obvious errors only. None of this answers "is it insightful".
 **Related:** judge independence is recorded per audit (narrator and judge are different providers when possible); a self-graded audit is flagged, not hidden.
 
+## D18. Gate A human review waived by the owner (2026-10-21)
+**Decision (owner's):** skip the manual review of the ten Gate A reports and continue building on machine verification only.
+**What is verified:** facts against GitHub (78 of 80), every claim audited by a second model (102 of 103 supported; judge checked with planted falsehoods), a first DeepWiki comparison. See D17 and docs/GATE_A.md.
+**What is NOT verified, and this is the accepted risk:** that a real person finds the reports insightful and the scores about right. Gate A is therefore recorded as "machine-verified, human-unverified", NOT "passed". Scores stay uncalibrated; the labels file (data/labels/gate_a.csv) stays empty on the human side.
+**Consequences:** V2 score calibration has no human labels yet, so score weights remain first guesses and should be presented as such; a cheap automated proxy for usefulness is worth building (see ROADMAP/STATUS); any user-facing launch should be treated as an experiment that gathers real feedback, not a proven product.
+**Revisit:** whenever the owner (or any early user) is willing to spend 10 minutes tapping useful/meh/wrong on a few reports.
+
 ## Open questions
 - Product vs. hackathon/college project? (changes polish and scope)
 - Local tool vs. hosted service? (affects sandbox design and key handling)
