@@ -52,7 +52,7 @@ Your scores also become the first labeled data for V2 calibration. Record them i
 
 Reports are on disk in `reports/gate_a/` (git-ignored; regenerate any time with `python scripts/gate_a.py`, about 5 to 30 seconds per repo once cloned). Each repo has a `.md` report to read and a `.json` with the full evidence. Earlier passes are kept for comparison: `reports/gate_a_v1/` (first run) and `reports/gate_a_v2/` (after the first round of fixes). Clones are cached under `.cache/repos/`.
 
-First-run timing, including cloning: chonkie 162 s, lightly 123 s, image-super-resolution 89 s, snips-nlu 80 s, the rest under 25 s. That misses the proposed "under 60 s per repo" target for the four bigger repos on a cold cache; warm-cache runs are 5 to 28 s. Most of the cold time is the clone (not yet measured separately).
+Timing. The first run, including cloning, took chonkie 162 s, lightly 123 s, image-super-resolution 89 s and snips-nlu 80 s. Timing instrumentation then showed a cold chonkie run spent 15 s cloning but **41 s on git history**: rename detection makes a partial clone download file contents one batch at a time. With `--no-renames` the same cold run takes 22 s total (history 0.2 s), under the proposed 60 s target. Current warm runs for all ten repos are 5 to 19 s.
 
 ## What changed between the first run and the one you are reviewing
 
@@ -70,7 +70,9 @@ The first run exposed defects that the synthetic tests could not. They are fixed
 | Rounded figures ("about 1500 commits") dropped true statements | Round figures within 10% are accepted |
 | Narration missing for some repos during the batch | Waits once for rate limits; asks for fewer tokens (Groq's 8,000 tokens/minute budget) |
 
-Current state of the rerun: 10 of 10 narrated, 0 crashes, 1 statement dropped in total (llm-scraper: "Node.js" was not in the evidence).
+Current state of the final run (analyzer version 7): 10 of 10 narrated, 0 crashes, 2 statements dropped in total (monodepth2: "cuDNN" and Reinforcement-Learning: "requirements.txt" were not in the evidence).
+
+Bugs found while regenerating the reports and fixed since the table above: inline evidence IDs such as "(E38, E41)" were read as invented numbers and wiped one repo's whole narration; a 503 benched a provider for 60 s, so picoGPT lost its narration twice; a degraded narration was cached; real files such as `chapters/*.md` were rejected as reading suggestions; large `.txt` split lists counted as docs.
 
 ## Known weak spots to look for while scoring
 
@@ -79,10 +81,27 @@ These are things I already suspect are wrong or weak. Please say if they bother 
 - **Scores are still my guesses.** Completeness and deployability weights are uncalibrated; your "too low / about right / too high" answers are what will calibrate them.
 - **Notebook-heavy repos (#3, #8, #9)**: the import graph does not read notebooks, so architecture details are thin.
 - **llm-scraper (#10)**: analysis depth is partial by design; there is no "read first" list because the graph is Python-only. Judge whether the narration is still useful without it.
-- **monodepth2 (#4)**: its authored content shows as 98.7% "docs" because large `.txt` split lists count as documents. Probably a misclassification (they are data).
+- **monodepth2 (#4)**: previously mislabelled as 98.7% "docs" (large `.txt` split lists); fixed, they now count as data. Check that its composition reads sensibly.
 - **Maturity labels** (prototype / working-demo / usable) come from the model reading the rule results, so they can disagree with the numeric scores. Chonkie got "working-demo" despite a 100/90 score.
 - **Narration is from one model family**, mostly Groq gpt-oss-120b, with Gemini as fallback; wording and judgment can vary between runs of the same repo.
 - **The citations check names, filenames and numbers, not meaning.** A statement can pass and still be misleading, so please flag any claim that feels wrong even if it looks cited.
+
+## Where to record your scores
+
+Preferred: edit **`data/labels/gate_a.csv`** (open it in Excel or any editor). Machine columns are pre-filled; fill the seven human columns per repo:
+
+| Column | Allowed values |
+|---|---|
+| insight_0_2 | 0 (nothing new), 1 (a little), 2 (clearly yes) |
+| false_statements | a whole number (0 is the goal) |
+| completeness_verdict, deployability_verdict | too_low, about_right, too_high |
+| read_first_quality | useless, ok, good |
+| trust | yes, maybe, no |
+| notes | free text |
+
+Check your entries with `PYTHONPATH=. python scripts/make_labels.py --check`. Re-running `scripts/make_labels.py` after a new analysis refreshes only the machine columns and never overwrites what you wrote. These scores become the calibration data for V2, so honest "too_high / too_low" answers matter more than being kind to the tool.
+
+The table below is an optional human-readable summary if you prefer prose.
 
 ## Results
 
