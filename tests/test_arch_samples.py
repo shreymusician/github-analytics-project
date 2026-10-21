@@ -37,3 +37,33 @@ def test_samples_carry_redacted_architecture_excerpts(tmp_path):
     p = profile.analyze(str(tmp_path))
     ex = p["samples"]["arch_excerpts"]
     assert [e["file"] for e in ex] == ["main.py"] and "sk-abcdefgh" not in ex[0]["text"] and "REDACTED" in ex[0]["text"]
+
+
+def test_core_directory_is_covered_even_when_glue_files_dominate_the_import_graph(tmp_path):
+    """chonkie-style layout: the import graph's favourites are glue (__init__, cli helpers); the real work lives in
+    chunker/. The picker must still show something from the heaviest directories and from the most-changed files."""
+    write(tmp_path, "src/pkg/__init__.py", "from .cli import run\n" * 10)
+    write(tmp_path, "src/pkg/cli.py", "def run():\n    pass\n" * 5)
+    write(tmp_path, "src/pkg/api/main.py", "app = 1\n" * 20)
+    write(tmp_path, "src/pkg/chunker/recursive.py", "def split(text):\n    return text.split()\n" * 200)   # the core, big
+    write(tmp_path, "src/pkg/chunker/token.py", "def tokens(text):\n    return list(text)\n" * 50)
+    write(tmp_path, "src/pkg/embeddings/openai.py", "def embed():\n    pass\n" * 10)
+    files = ["src/pkg/__init__.py", "src/pkg/cli.py", "src/pkg/api/main.py", "src/pkg/chunker/recursive.py",
+             "src/pkg/chunker/token.py", "src/pkg/embeddings/openai.py"]
+    st = {"path_index": files, "notable_files": stack.notable_files(files)}
+    glue_only = {"read_first": [{"file": "src/pkg/__init__.py"}, {"file": "src/pkg/cli.py"}]}
+
+    without_history = profile.pick_arch_files(tmp_path, st, glue_only)
+    assert "src/pkg/chunker/recursive.py" in without_history          # heaviest directory is covered via its biggest file
+
+    hot = {"hotspots": [{"file": "src/pkg/chunker/token.py", "changes": 40}, {"file": "README.md", "changes": 30}]}
+    with_history = profile.pick_arch_files(tmp_path, st, glue_only, hot)
+    assert with_history[:3] == ["src/pkg/__init__.py", "src/pkg/cli.py", "src/pkg/chunker/token.py"]   # graph picks, then the hotspot
+    assert "README.md" not in with_history and len(set(with_history)) == len(with_history)
+
+
+def test_missing_or_nonexistent_hotspots_are_ignored(tmp_path):
+    write(tmp_path, "a.py", "x = 1\n" * 30)
+    st = {"path_index": ["a.py"], "notable_files": ["a.py"]}
+    got = profile.pick_arch_files(tmp_path, st, {"read_first": []}, {"hotspots": [{"file": "deleted_long_ago.py", "changes": 99}]})
+    assert got == ["a.py"]

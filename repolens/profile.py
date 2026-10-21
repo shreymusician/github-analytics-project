@@ -25,28 +25,67 @@ _ENTRY_STEMS = ("index", "main", "app", "cli", "server", "core", "engine", "pipe
 _GENERATED = re.compile(r"(\.min\.|\.bundle\.|\.d\.ts$|-lock\.|\.lock$)")
 
 
-def pick_arch_files(root: Path, st: dict, arch: dict, n: int = ARCH_FILES) -> list[str]:
-    """Which source files to show the 'how it works' stage: the import graph's picks for Python, then (for any
-    language, and for repos the Python graph cannot see) entry-like names first and the biggest files next."""
-    chosen = [r["file"] for r in arch.get("read_first", [])][:n]
-    code = [p for p in st.get("notable_files", []) if Path(p).suffix.lower() in stack.CODE_EXTS
-            and p not in chosen and not _GENERATED.search(p.lower())]
+def _size(root: Path, rel: str) -> int:
+    try:
+        return (root / rel).stat().st_size
+    except OSError:
+        return 0
+
+
+def _is_source(rel: str) -> bool:
+    low = rel.lower()
+    return Path(rel).suffix.lower() in stack.CODE_EXTS and not _GENERATED.search(low) and "test" not in low
+
+
+def pick_arch_files(root: Path, st: dict, arch: dict, hist: dict | None = None, n: int = ARCH_FILES) -> list[str]:
+    """Which source files the 'how it works' stage reads. Mixing signals matters: files everyone imports are
+    often glue (package __init__, CLI helpers) and miss the core idea (chonkie's chunkers).
+
+    1. up to 3 of the import graph's read-first picks (Python);
+    2. up to 2 of the most-changed source files in the git history (where the work happens);
+    3. the biggest source file of each of the heaviest directories not yet represented (covers the main modules);
+    4. entry-like names (index, main, app, cli...), shallow and big first, to fill any remaining slots
+       (this is also what makes non-Python repos work, since the graph cannot see them).
+    """
+    chosen: list[str] = []
+
+    def take(rel: str) -> None:
+        if rel not in chosen and (root / rel).is_file():
+            chosen.append(rel)
+
+    for r in arch.get("read_first", [])[:3]:
+        take(r["file"])
+    hot = [h["file"] for h in (hist or {}).get("hotspots", []) if _is_source(h["file"])]
+    for rel in hot[:2]:
+        take(rel)
+
+    sources = [p for p in st.get("path_index", []) if _is_source(p)] or [p for p in st.get("notable_files", []) if _is_source(p)]
+    by_dir: dict[str, list[tuple[int, str]]] = {}
+    for p in sources:
+        by_dir.setdefault(p.rpartition("/")[0], []).append((_size(root, p), p))
+    covered = {c.rpartition("/")[0] for c in chosen}
+    for d, files in sorted(by_dir.items(), key=lambda kv: -sum(s for s, _ in kv[1])):
+        if len(chosen) >= n:
+            break
+        if d not in covered:
+            # inside a directory: an entry-like file if there is one, otherwise the biggest
+            take(min(files, key=lambda sf: (0 if Path(sf[1]).stem.lower() in _ENTRY_STEMS else 1, -sf[0], sf[1]))[1])
+            covered.add(d)
 
     def rank(p: str):
-        stem = Path(p).stem.lower()
-        try:
-            size = (root / p).stat().st_size
-        except OSError:
-            size = 0
-        return (0 if stem in _ENTRY_STEMS else 1, p.count("/"), -size, p)
-    return (chosen + sorted(code, key=rank))[:n]
+        return (0 if Path(p).stem.lower() in _ENTRY_STEMS else 1, p.count("/"), -_size(root, p), p)
+    for p in sorted((p for p in sources if p not in chosen), key=rank):
+        if len(chosen) >= n:
+            break
+        take(p)
+    return chosen[:n]
 
 
 def _excerpt(root: Path, rel: str, lines: int, chars: int) -> str:
     return "\n".join(read_text(root / rel).splitlines()[:lines])[:chars]
 
 
-def _samples(root: Path, st: dict, arch: dict) -> dict:
+def _samples(root: Path, st: dict, arch: dict, hist: dict | None = None) -> dict:
     readme = next((p for p in st["_paths"] if re.fullmatch(r"readme(\.\w+)?", p.lower())), None)
     out = {"readme_head": redact(read_text(root / readme)[:README_CHARS]) if readme else "", "excerpts": [],
            "arch_excerpts": []}
@@ -54,7 +93,7 @@ def _samples(root: Path, st: dict, arch: dict) -> dict:
         text = _excerpt(root, r["file"], EXCERPT_LINES, EXCERPT_CHARS)
         if text:
             out["excerpts"].append({"file": r["file"], "text": redact(text)})
-    for rel in pick_arch_files(root, st, arch):
+    for rel in pick_arch_files(root, st, arch, hist):
         text = _excerpt(root, rel, ARCH_EXCERPT_LINES, ARCH_EXCERPT_CHARS)
         if text:
             out["arch_excerpts"].append({"file": rel, "text": redact(text)})
@@ -79,7 +118,7 @@ def analyze_root(root: Path, source: str, sha: str | None, now: float | None = N
     from_imports = [t for t in stack.tags_for_imports(arch.get("third_party_imports", [])) if t not in st["capability_tags"]]
     st["capability_tags"] = st["capability_tags"] + from_imports
     st["tags_from_imports"] = from_imports
-    samples = _timed(timings, "samples", _samples, root, st, arch)
+    samples = _timed(timings, "samples", _samples, root, st, arch, hist)
     st.pop("_paths")
     return {"repo": source, "sha": sha, "stack": st, "architecture": arch, "history": hist,
             "samples": samples, **sig}
