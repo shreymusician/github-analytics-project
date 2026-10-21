@@ -1,0 +1,630 @@
+{
+  "profile": {
+    "repo": "feyninc/chonkie",
+    "sha": "664454b689d68614bcfc0b1d57fc2a28b5862825",
+    "stack": {
+      "languages": {
+        "Python": 1.0
+      },
+      "primary_language": "Python",
+      "manifests": [
+        "pyproject.toml"
+      ],
+      "lockfiles": [
+        "uv.lock"
+      ],
+      "dependency_count": 5,
+      "pinned_ratio": 0.0,
+      "capability_tags": [
+        "data",
+        "testing",
+        "http-client",
+        "data-validation",
+        "web-api",
+        "database",
+        "llm-api",
+        "nlp",
+        "huggingface"
+      ],
+      "recognized_dependencies": [
+        "numpy"
+      ],
+      "dependencies": [
+        "chonkie-core",
+        "numpy",
+        "tenacity",
+        "tokie",
+        "tqdm"
+      ],
+      "file_census": {
+        "total_files": 354,
+        "categories": {
+          "media": {
+            "files": 36,
+            "share_bytes": 0.725,
+            "top_extensions": [
+              ".png",
+              ".svg"
+            ]
+          },
+          "other": {
+            "files": 77,
+            "share_bytes": 0.145,
+            "top_extensions": [
+              ".mdx",
+              "(none)",
+              ".lock"
+            ]
+          },
+          "code": {
+            "files": 218,
+            "share_bytes": 0.121,
+            "top_extensions": [
+              ".py"
+            ]
+          },
+          "docs": {
+            "files": 8,
+            "share_bytes": 0.007,
+            "top_extensions": [
+              ".md",
+              ".txt"
+            ]
+          },
+          "config": {
+            "files": 13,
+            "share_bytes": 0.002,
+            "top_extensions": [
+              ".yml",
+              ".toml",
+              ".ini"
+            ]
+          },
+          "data": {
+            "files": 2,
+            "share_bytes": 0.001,
+            "top_extensions": [
+              ".json"
+            ]
+          }
+        }
+      },
+      "tags_from_imports": [
+        "testing",
+        "http-client",
+        "data-validation",
+        "web-api",
+        "database",
+        "llm-api",
+        "nlp",
+        "huggingface"
+      ]
+    },
+    "architecture": {
+      "python_modules": 218,
+      "import_edges": 559,
+      "third_party_imports": [
+        {
+          "module": "pytest",
+          "name": "pytest",
+          "files": 78
+        },
+        {
+          "module": "numpy",
+          "name": "numpy",
+          "files": 54
+        },
+        {
+          "module": "httpx",
+          "name": "httpx",
+          "files": 13
+        },
+        {
+          "module": "pydantic",
+          "name": "pydantic",
+          "files": 7
+        },
+        {
+          "module": "tokenizers",
+          "name": "tokenizers",
+          "files": 7
+        },
+        {
+          "module": "fastapi",
+          "name": "fastapi",
+          "files": 6
+        },
+        {
+          "module": "chonkie_core",
+          "name": "chonkie_core",
+          "files": 5
+        },
+        {
+          "module": "sqlalchemy",
+          "name": "sqlalchemy",
+          "files": 5
+        },
+        {
+          "module": "tiktoken",
+          "name": "tiktoken",
+          "files": 5
+        },
+        {
+          "module": "huggingface_hub",
+          "name": "huggingface_hub",
+          "files": 4
+        },
+        {
+          "module": "openai",
+          "name": "openai",
+          "files": 3
+        },
+        {
+          "module": "pandas",
+          "name": "pandas",
+          "files": 3
+        },
+        {
+          "module": "tqdm",
+          "name": "tqdm",
+          "files": 3
+        },
+        {
+          "module": "transformers",
+          "name": "transformers",
+          "files": 3
+        },
+        {
+          "module": "alembic",
+          "name": "alembic",
+          "files": 2
+        }
+      ],
+      "entry_points": [
+        "src/chonkie/api/main.py",
+        "src/chonkie/cli/cli_utils.py",
+        "tests/chunkers/test_late_chunker.py",
+        "tests/chunkers/test_sentence_chunker.py",
+        "tests/embeddings/test_cohere_embeddings.py",
+        "tests/embeddings/test_custom_embeddings.py",
+        "tests/embeddings/test_gemini_embeddings.py",
+        "tests/embeddings/test_jina_embeddings.py",
+        "tests/embeddings/test_litellm_embeddings.py",
+        "tests/embeddings/test_model2vec_embeddings.py",
+        "tests/embeddings/test_openai_embeddings.py",
+        "tests/embeddings/test_sentence_transformer_embeddings.py",
+        "tests/embeddings/test_voyageai_embeddings.py",
+        "tests/test_logging.py"
+      ],
+      "read_first": [
+        {
+          "file": "src/chonkie/types/__init__.py",
+          "importance": 15.31,
+          "imported_by": 88
+        },
+        {
+          "file": "src/chonkie/logger.py",
+          "importance": 11.65,
+          "imported_by": 42
+        },
+        {
+          "file": "src/chonkie/embeddings/base.py",
+          "importance": 8.74,
+          "imported_by": 23
+        },
+        {
+          "file": "src/chonkie/__init__.py",
+          "importance": 7.83,
+          "imported_by": 33
+        },
+        {
+          "file": "src/chonkie/types/base.py",
+          "importance": 7.05,
+          "imported_by": 2
+        },
+        {
+          "file": "src/chonkie/types/document.py",
+          "importance": 5.28,
+          "imported_by": 3
+        },
+        {
+          "file": "src/chonkie/utils/component.py",
+          "importance": 4.87,
+          "imported_by": 4
+        },
+        {
+          "file": "src/chonkie/pipeline/__init__.py",
+          "importance": 4.55,
+          "imported_by": 35
+        }
+      ],
+      "subsystems": [
+        {
+          "name": "chonkie",
+          "size": 190,
+          "files": [
+            "src/chonkie/__init__.py",
+            "src/chonkie/chef/__init__.py",
+            "src/chonkie/chef/base.py",
+            "src/chonkie/chef/liteparse.py",
+            "src/chonkie/chef/markdown.py",
+            "src/chonkie/chef/mistral_ocr.py"
+          ]
+        },
+        {
+          "name": "chonkie",
+          "size": 12,
+          "files": [
+            "src/chonkie/api/database.py",
+            "src/chonkie/api/main.py",
+            "src/chonkie/api/migrations/env.py",
+            "src/chonkie/api/models/__init__.py",
+            "src/chonkie/api/models/pipeline.py",
+            "src/chonkie/api/routes/chunking.py"
+          ]
+        },
+        {
+          "name": "chonkie",
+          "size": 2,
+          "files": [
+            "src/chonkie/utils/_api.py",
+            "tests/test_utils.py"
+          ]
+        }
+      ],
+      "isolated_modules": [
+        "src/chonkie/api/__init__.py",
+        "src/chonkie/api/migrations/__init__.py",
+        "src/chonkie/api/migrations/versions/001_initial.py",
+        "src/chonkie/api/migrations/versions/__init__.py",
+        "src/chonkie/api/routes/__init__.py",
+        "src/chonkie/experimental/__init__.py",
+        "tests/__init__.py",
+        "tests/chef/__init__.py",
+        "tests/conftest.py",
+        "tests/embeddings/__init__.py",
+        "tests/fetcher/__init__.py",
+        "tests/pipeline/__init__.py",
+        "tests/refinery/__init__.py",
+        "tests/vision/__init__.py"
+      ]
+    },
+    "history": {
+      "commits": 1524,
+      "first_commit": "2025-03-29",
+      "last_commit": "2026-08-26",
+      "span_days": 516,
+      "idle_days": 56,
+      "status": "active",
+      "shape": "sustained",
+      "contributors": 50,
+      "top_author_share": 0.45,
+      "bus_factor": 2,
+      "longest_gap_days": 28.3,
+      "low_effort_message_ratio": 0.49,
+      "hotspots": [
+        {
+          "file": "pyproject.toml",
+          "changes": 186
+        },
+        {
+          "file": "src/chonkie/__init__.py",
+          "changes": 124
+        },
+        {
+          "file": "uv.lock",
+          "changes": 100
+        },
+        {
+          "file": "src/chonkie/chunker/code.py",
+          "changes": 58
+        },
+        {
+          "file": "docs/docs.json",
+          "changes": 55
+        }
+      ],
+      "co_changed": [
+        {
+          "files": [
+            "pyproject.toml",
+            "src/chonkie/__init__.py"
+          ],
+          "times": 68
+        },
+        {
+          "files": [
+            "pyproject.toml",
+            "uv.lock"
+          ],
+          "times": 29
+        },
+        {
+          "files": [
+            "src/chonkie/chunker/recursive.py",
+            "src/chonkie/chunker/sentence.py"
+          ],
+          "times": 16
+        },
+        {
+          "files": [
+            "src/chonkie/handshakes/chroma.py",
+            "src/chonkie/handshakes/qdrant.py"
+          ],
+          "times": 16
+        },
+        {
+          "files": [
+            "src/chonkie/chunker/recursive.py",
+            "src/chonkie/chunker/semantic.py"
+          ],
+          "times": 14
+        }
+      ],
+      "origin_story": [
+        "Initial commit",
+        "Make Init classes, base classes init, and tokenizer init",
+        "Finish tokenizer class",
+        "add sample texts for tokenizers",
+        "Finish character tokenizer"
+      ]
+    },
+    "samples": {
+      "readme_head": "<div align='center'>\n\n![Chonkie Logo](https://github.com/chonkie-inc/chonkie/blob/main/assets/chonkie_logo_br_transparent_bg.png?raw=true)\n\n# \ud83e\udd9b Chonkie \u2728\n\n[![PyPI version](https://img.shields.io/pypi/v/chonkie.svg)](https://pypi.org/project/chonkie/)\n[![License](https://img.shields.io/github/license/chonkie-inc/chonkie.svg)](https://github.com/chonkie-inc/chonkie/blob/main/LICENSE)\n[![Documentation](https://img.shields.io/badge/docs-chonkie.ai-blue.svg)](https://docs.chonkie.ai)\n[![Package size](https://img.shields.io/badge/size-505KB-blue)](https://github.com/chonkie-inc/chonkie/blob/main/README.md#installation)\n[![codecov](https://codecov.io/gh/chonkie-inc/chonkie/graph/badge.svg?token=[REDACTED]\n[![Downloads](https://static.pepy.tech/badge/chonkie)](https://pepy.tech/project/chonkie)\n[![Discord](https://dcbadge.limes.pink/api/server/https://discord.gg/vH3SkRqmUz?style=flat)](https://discord.gg/vH3SkRqmUz)\n[![GitHub stars](https://img.shields.io/github/stars/chonkie-inc/chonkie.svg)](https://github.com/chonkie-inc/chonkie/stargazers)\n\n_The lightweight ingestion library for fast, efficient and robust RAG pipelines_\n\n[Installation](#\ud83d\udce6-installation) \u2022\n[Usage](#\ud83d\ude80-usage) \u2022\n[Chunkers](#\u2702\ufe0f-chunkers) \u2022\n[Integrations](#\ud83d\udd0c-integrations) \u2022\n[Benchmarks](#\ud83d\udcca-benchmarks)\n\n</div>\n\nTired of making your gazillionth chunker? Sick of the overhead of large libraries? Want to chunk your texts quickly and efficiently? Chonkie the mighty hippo is here to",
+      "excerpts": [
+        {
+          "file": "src/chonkie/types/__init__.py",
+          "text": "\"\"\"Module for chunkers.\"\"\"\n\nfrom .base import Chunk\nfrom .code import LanguageConfig, MergeRule, SplitRule\nfrom .document import Document\nfrom .markdown import MarkdownCode, MarkdownDocument, MarkdownImage, MarkdownTable\nfrom .recursive import RecursiveLevel, RecursiveRules\nfrom .sentence import Sentence\n\n__all__ = [\n    \"Chunk\",\n    \"RecursiveLevel\",\n    \"RecursiveRules\",\n    \"Sentence\",\n    \"LanguageConfig\",\n    \"MergeRule\",\n    \"SplitRule\",\n    \"Document\",\n    \"MarkdownDocument\",\n    \"MarkdownTable\",\n    \"MarkdownCode\",\n    \"MarkdownImage\",\n]"
+        },
+        {
+          "file": "src/chonkie/logger.py",
+          "text": "\"\"\"Centralized logging configuration for Chonkie.\n\nThis module provides a simple, extensible logging interface using Python's standard logging.\nLogging defaults to WARNING level (shows warnings and errors) but can be customized via\nthe CHONKIE_LOG environment variable or programmatic API.\n\nEnvironment Variable:\n    CHONKIE_LOG: Control logging behavior\n        - Not set: WARNING and above (default, shows warnings and errors)\n        - off/false/0/disabled/none: Disable logging\n        - error/1: ERROR level only\n        - warning/2: WARNING and above (same as default)\n        - info/3: INFO and above\n        - debug/4: DEBUG and above (most verbose)\n\nExample:\n    >>> from chonkie.logger import get_logger\n    >>> logger = get_logger(__name__)\n    >>> logger.info(\"Processing chunks\")\n\n    >>> # Configure programmatically\n    >>> import chonkie\n    >>> chonkie.logger.configure(\"debug\")\n    >>> chonkie.logger.configure(\"off\")  # Disable\n\n\"\"\"\n\nimport logging\nimport os\nimport sys\nfrom typing import Any, MutableMapping, Optional\n\n# Track if we've configured the logger\n_configured = False\n\nDISABLED_LOG_LEVEL = 9001  # It's over 9000!\n\n# Default configuration\nDEFAULT_LOG_LEVEL = \"WARNING\"\nD"
+        },
+        {
+          "file": "src/chonkie/embeddings/base.py",
+          "text": "\"\"\"Base class for all embeddings implementations.\"\"\"\n\nimport asyncio\nfrom abc import ABC, abstractmethod\nfrom typing import Any, Union\n\nimport numpy as np\n\n\nclass BaseEmbeddings(ABC):\n    \"\"\"Abstract base class for all embeddings implementations.\n\n    All embeddings implementations should inherit from this class and implement\n    the embed() and similarity() methods according to their specific embedding strategy.\n    \"\"\"\n\n    def __init__(self) -> None:\n        \"\"\"Initialize the BaseEmbeddings class.\n\n        This class should be inherited by all embeddings classes and implement the\n        abstract methods for embedding text and computing similarity between embeddings.\n\n        It doesn't impose any specific requirements on the embedding model, because\n        it can be used for embeddings providers that work via REST APIs or other means.\n\n        Raises:\n            NotImplementedError: If any of the abstract methods are not implemented\n\n        \"\"\"\n        super().__init__()\n\n    @abstractmethod\n    def embed(self, text: str) -> np.ndarray:\n        \"\"\"Embed a text string into a vector representation.\n\n        This method should be implemented for all embeddings models.\n\n        "
+        }
+      ]
+    },
+    "completeness": {
+      "score": 100,
+      "evidence": [
+        {
+          "ok": true,
+          "weight": 20,
+          "note": "94 test file(s)"
+        },
+        {
+          "ok": true,
+          "weight": 10,
+          "note": "test/source file ratio 0.75"
+        },
+        {
+          "ok": true,
+          "weight": 15,
+          "note": "substantial README (20755 chars)"
+        },
+        {
+          "ok": true,
+          "weight": 5,
+          "note": "license present"
+        },
+        {
+          "ok": true,
+          "weight": 20,
+          "note": "25/752 functions are stubs"
+        },
+        {
+          "ok": true,
+          "weight": 10,
+          "note": "4 TODO/FIXME markers"
+        },
+        {
+          "ok": true,
+          "weight": 10,
+          "note": "125 source files"
+        },
+        {
+          "ok": true,
+          "weight": 10,
+          "note": "history looks active/sustained"
+        }
+      ]
+    },
+    "deployability": {
+      "score": 90,
+      "evidence": [
+        {
+          "ok": true,
+          "weight": 25,
+          "note": "Dockerfile present (Dockerfile)"
+        },
+        {
+          "ok": true,
+          "weight": 15,
+          "note": "CI pipeline configured"
+        },
+        {
+          "ok": true,
+          "weight": 15,
+          "note": "dependencies pinned or locked"
+        },
+        {
+          "ok": true,
+          "weight": 15,
+          "note": "dependency manifest (pyproject.toml)"
+        },
+        {
+          "ok": true,
+          "weight": 10,
+          "note": "clear entry point / run command"
+        },
+        {
+          "ok": false,
+          "weight": 10,
+          "note": "no env template"
+        },
+        {
+          "ok": true,
+          "weight": 10,
+          "note": "README explains install/run"
+        }
+      ]
+    },
+    "metrics": {
+      "test_files": 94,
+      "source_files": 125,
+      "readme_chars": 20755,
+      "python": {
+        "functions": 752,
+        "stubs": 25,
+        "todos": 4,
+        "lines": 21111
+      }
+    },
+    "external": {
+      "github": {
+        "source": "github",
+        "full_name": "feyninc/chonkie",
+        "description": "\ud83e\udd9b CHONK docs with Chonkie \u2728 \u2014 The lightweight ingestion library for fast, efficient and robust RAG pipelines",
+        "stars": 4797,
+        "forks": 364,
+        "archived": false,
+        "fork": false,
+        "topics": [
+          "ai",
+          "chonkie",
+          "chunker",
+          "chunking-algorithm",
+          "llms",
+          "rag",
+          "retrieval-systems",
+          "semantic-chunker",
+          "similarity-search",
+          "splitting-algorithms",
+          "text-splitter"
+        ],
+        "pushed_at": "2026-10-20",
+        "license": "MIT"
+      }
+    }
+  },
+  "narrative": {
+    "narrative": {
+      "summary": {
+        "text": "The repository is dominated by media files (72% of bytes) with the remaining code written entirely in Python (100% of code bytes). It provides a Python library for chunking text, exposing core types, logging, and embedding abstractions, and includes a FastAPI web API and CLI utilities.",
+        "evidence": [
+          "E2",
+          "E1",
+          "E3",
+          "E4",
+          "E6"
+        ]
+      },
+      "scope": {
+        "text": "The codebase implements chunking algorithms, type definitions, logging, embedding base classes, a FastAPI API, CLI helpers, and extensive test suites covering chunkers and embeddings.",
+        "evidence": [
+          "E3",
+          "E6",
+          "E13",
+          "E14",
+          "E15",
+          "E21",
+          "E22"
+        ]
+      },
+      "audience": {
+        "text": "Targeted at developers building RAG pipelines who need a lightweight, extensible chunking library and integrations with LLM APIs.",
+        "evidence": [
+          "E4",
+          "E38",
+          "E39"
+        ]
+      },
+      "maturity": {
+        "level": "usable",
+        "text": "The project has active history, many contributors, extensive tests (94 test files, 0.75 test/source ratio), CI, Dockerfile, and a documented README, indicating a usable library ready for integration.",
+        "evidence": [
+          "E16",
+          "E21",
+          "E22",
+          "E28",
+          "E29",
+          "E30",
+          "E31",
+          "E32",
+          "E33",
+          "E34",
+          "E36",
+          "E23",
+          "E24"
+        ]
+      },
+      "how_to_run": [
+        {
+          "text": "Install via pip (as shown in the README) and run the FastAPI server with the entry point src/chonkie/api/main.py or use the CLI utilities in src/chonkie/cli/cli_utils.py.",
+          "evidence": [
+            "E6",
+            "E36",
+            "E3"
+          ]
+        }
+      ],
+      "learning_path": [
+        {
+          "file": "src/chonkie/types/__init__.py",
+          "text": "Study the core type definitions (Chunk, Document, Sentence, etc.) which are heavily imported (88 modules) and form the basis of the chunking API.",
+          "evidence": [
+            "E7",
+            "E40"
+          ]
+        },
+        {
+          "file": "src/chonkie/logger.py",
+          "text": "Examine the centralized logging configuration to understand how the library manages log levels via environment variables.",
+          "evidence": [
+            "E8",
+            "E41"
+          ]
+        },
+        {
+          "file": "src/chonkie/embeddings/base.py",
+          "text": "Review the abstract BaseEmbeddings class to see how different embedding providers are integrated.",
+          "evidence": [
+            "E9",
+            "E42"
+          ]
+        },
+        {
+          "file": "src/chonkie/api/main.py",
+          "text": "Look at the FastAPI entry point to learn how the library exposes its functionality as a web API.",
+          "evidence": [
+            "E6",
+            "E3"
+          ]
+        }
+      ],
+      "caveats": [
+        {
+          "text": "No environment template is provided, so developers must create their own .env files for configuration.",
+          "evidence": [
+            "E35"
+          ]
+        },
+        {
+          "text": "While dependencies are locked, the pinned ratio is 0.0, indicating version ranges may be used.",
+          "evidence": [
+            "E5"
+          ]
+        }
+      ]
+    },
+    "provider": "groq",
+    "dropped": 0,
+    "dropped_detail": []
+  },
+  "cache": {
+    "analysis": "miss",
+    "narrative": "miss"
+  }
+}
