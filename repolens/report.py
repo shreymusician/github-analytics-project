@@ -54,8 +54,10 @@ def render(result: dict) -> str:
         L += [f"- {'–' if e['ok'] is None else '✓' if e['ok'] else '✗'} {e['note']}" for e in p[area]["evidence"]]
         L += [""]
     if p.get("analysis_depth") == "partial":
-        L += ["> **Partial analysis:** the import graph and code-quality checks cover Python only, so for this repo's "
-              "main language the architecture and completeness details are limited (checks marked – were not run).", ""]
+        graphed = ar.get("python_modules", 0) + ar.get("js_modules", 0)
+        L += ["> **Partial analysis:** stub-function and TODO checks cover Python only (checks marked – were not run). "
+              + ("The import graph covers Python and JavaScript/TypeScript." if graphed
+                 else "No import graph could be built for this repo's languages yet."), ""]
 
     cen = st.get("file_census")
     if cen:

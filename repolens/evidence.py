@@ -48,8 +48,11 @@ def build_packet(profile: dict) -> dict:
     for s in ar.get("subsystems", [])[:4]:
         add(f"Subsystem '{s['name']}' of {s['size']} tightly-coupled modules, e.g. {', '.join(s['files'][:3])}.")
     if profile.get("analysis_depth") == "partial":
-        add("Analysis depth is PARTIAL: the import graph and stub/TODO checks only cover Python, so architecture and "
-            "completeness details for other languages are not assessed.")
+        graphed = ar.get("python_modules", 0) + ar.get("js_modules", 0)
+        add("Analysis depth is PARTIAL: stub-function and TODO checks only cover Python, so code-completeness details "
+            "for other languages are not assessed. "
+            + ("The import graph covers Python and JavaScript/TypeScript files only." if graphed
+               else "No import graph could be built: this repo's languages are not supported yet."))
 
     if hi.get("commits"):
         add(f"History: {hi['commits']} commits from {hi['first_commit']} to {hi['last_commit']} "

@@ -16,3 +16,30 @@ def test_non_python_repo_marks_checks_not_assessed(tmp_path):
     assert len(skipped) == 2 and all(e["weight"] == 0 for e in skipped)
     text = evidence.packet_text(evidence.build_packet(p))
     assert "NOT ASSESSED" in text and "PARTIAL" in text
+
+
+def test_partial_wording_is_accurate_about_what_the_graph_covers(tmp_path):
+    """The graph understands Python and JS/TS; the stub/TODO checks only Python. The text must not say otherwise."""
+    from repolens import evidence
+    from repolens.report import render
+    sh(tmp_path, "init", "-q")
+    for i in range(6):
+        write(tmp_path, f"src/m{i}.ts", f"import {{ x }} from './m{(i + 1) % 6}'\nexport const a{i} = {i}\n" * 3)
+    write(tmp_path, "README.md", "# t\n" + "x" * 600)
+    sh(tmp_path, "add", "-A")
+    sh(tmp_path, "commit", "-qm", "x")
+    p = profile.analyze(str(tmp_path))
+    assert p["architecture"]["js_modules"] == 6
+    text = evidence.packet_text(evidence.build_packet(p))
+    assert "covers Python and JavaScript/TypeScript" in text and "stub-function and TODO checks only cover Python" in text
+    assert "Python and JavaScript/TypeScript" in render({"profile": p, "narrative": None, "cache": {}, "timings": {}})
+
+    other = tmp_path.parent / (tmp_path.name + "_go")
+    other.mkdir()
+    sh(other, "init", "-q")
+    for i in range(6):
+        write(other, f"cmd/m{i}.go", f"package main\nfunc f{i}() {{}}\n")
+    sh(other, "add", "-A")
+    sh(other, "commit", "-qm", "x")
+    q = profile.analyze(str(other))
+    assert "No import graph could be built" in evidence.packet_text(evidence.build_packet(q))
