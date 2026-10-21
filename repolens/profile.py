@@ -18,13 +18,45 @@ K_ANALYSIS, K_NARRATIVE = f"analysis.v{ANALYZER_VERSION}", f"narrative.v{ANALYZE
 README_CHARS, EXCERPT_CHARS, EXCERPT_LINES, EXCERPTS = 1500, 1200, 60, 3
 
 
+# The "how it works" stage reads more source than the main narration does.
+ARCH_FILES, ARCH_EXCERPT_LINES, ARCH_EXCERPT_CHARS = 6, 80, 1800
+_ENTRY_STEMS = ("index", "main", "app", "cli", "server", "core", "engine", "pipeline", "model", "models", "api", "__main__")
+_GENERATED = re.compile(r"(\.min\.|\.bundle\.|\.d\.ts$|-lock\.|\.lock$)")
+
+
+def pick_arch_files(root: Path, st: dict, arch: dict, n: int = ARCH_FILES) -> list[str]:
+    """Which source files to show the 'how it works' stage: the import graph's picks for Python, then (for any
+    language, and for repos the Python graph cannot see) entry-like names first and the biggest files next."""
+    chosen = [r["file"] for r in arch.get("read_first", [])][:n]
+    code = [p for p in st.get("notable_files", []) if Path(p).suffix.lower() in stack.CODE_EXTS
+            and p not in chosen and not _GENERATED.search(p.lower())]
+
+    def rank(p: str):
+        stem = Path(p).stem.lower()
+        try:
+            size = (root / p).stat().st_size
+        except OSError:
+            size = 0
+        return (0 if stem in _ENTRY_STEMS else 1, p.count("/"), -size, p)
+    return (chosen + sorted(code, key=rank))[:n]
+
+
+def _excerpt(root: Path, rel: str, lines: int, chars: int) -> str:
+    return "\n".join(read_text(root / rel).splitlines()[:lines])[:chars]
+
+
 def _samples(root: Path, st: dict, arch: dict) -> dict:
     readme = next((p for p in st["_paths"] if re.fullmatch(r"readme(\.\w+)?", p.lower())), None)
-    out = {"readme_head": redact(read_text(root / readme)[:README_CHARS]) if readme else "", "excerpts": []}
+    out = {"readme_head": redact(read_text(root / readme)[:README_CHARS]) if readme else "", "excerpts": [],
+           "arch_excerpts": []}
     for r in arch.get("read_first", [])[:EXCERPTS]:
-        text = "\n".join(read_text(root / r["file"]).splitlines()[:EXCERPT_LINES])[:EXCERPT_CHARS]
+        text = _excerpt(root, r["file"], EXCERPT_LINES, EXCERPT_CHARS)
         if text:
             out["excerpts"].append({"file": r["file"], "text": redact(text)})
+    for rel in pick_arch_files(root, st, arch):
+        text = _excerpt(root, rel, ARCH_EXCERPT_LINES, ARCH_EXCERPT_CHARS)
+        if text:
+            out["arch_excerpts"].append({"file": rel, "text": redact(text)})
     return out
 
 
