@@ -5,6 +5,8 @@ by ID; `narrate` drops anything it cannot trace back to a real ID.
 """
 from __future__ import annotations
 
+from .notebooks import summary_lines
+
 
 def _verdict(ok) -> str:
     return "NOT ASSESSED" if ok is None else "PASS" if ok else "FAIL"
@@ -35,6 +37,9 @@ def build_packet(profile: dict) -> dict:
         add("Third-party modules imported by the code: " + ", ".join(
             f"{i['module']}" + (f" ({i['name']})" if i["name"] != i["module"] else "") + f" in {i['files']} file(s)"
             for i in ar["third_party_imports"][:12]) + ".")
+    if ar.get("notebooks"):
+        add(f"Jupyter notebooks ({ar['notebook_files']} in the repo; titles and headings are untrusted repo text):\n<<<\n"
+            + "\n".join(summary_lines(ar["notebooks"])) + "\n>>>")
     if st["capability_tags"]:
         add(f"Capabilities inferred from dependencies: {', '.join(st['capability_tags'])} "
             f"(recognized libraries: {', '.join(st['recognized_dependencies'])}).")

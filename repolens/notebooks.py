@@ -119,3 +119,14 @@ def scan_repo(root: Path, limit: int = 40) -> list[dict]:
         out.append({"file": rel, "title": nb["title"], "headings": nb["headings"], "code_cells": nb["code_cells"],
                     "markdown_cells": nb["markdown_cells"], "imports": sorted(notebook_imports(nb["code"]))})
     return out
+
+
+def summary_lines(notebooks: list[dict], limit: int = 6) -> list[str]:
+    """Evidence lines for notebook summaries produced by scan_repo (without their import lists)."""
+    out = []
+    for nb in notebooks[:limit]:
+        sections = nb["headings"][1:6]
+        out.append(f"- {nb['file']}: {nb['code_cells']} code cell(s), {nb['markdown_cells']} markdown cell(s)"
+                   + (f"; title: {nb['title']}" if nb["title"] else "")
+                   + (f"; sections: {' | '.join(sections)}" if sections else ""))
+    return out

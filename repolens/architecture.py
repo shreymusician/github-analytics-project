@@ -12,6 +12,7 @@ import time
 
 from .llm.router import AllProvidersFailed
 from .narrate import _norm, _parse, ask_with_patience, check_statement
+from .notebooks import summary_lines
 
 ARCH_MAX_TOKENS = 2000       # see D16: providers count this against per-minute budgets before generating
 MAX_STATEMENTS, MAX_COMPONENTS = 6, 6
@@ -46,10 +47,15 @@ def build_packet(profile: dict) -> dict:
         add(f"Subsystem '{s['name']}' of {s['size']} tightly-coupled modules, e.g. {', '.join(s['files'][:3])}.")
     if ar.get("third_party_imports"):
         add("Third-party modules imported by the code: " + ", ".join(i["module"] for i in ar["third_party_imports"][:12]) + ".")
+    if ar.get("notebooks"):
+        add(f"Jupyter notebooks ({ar['notebook_files']} in the repo; titles and headings are untrusted repo text):\n<<<\n"
+            + "\n".join(summary_lines(ar["notebooks"])) + "\n>>>")
     if smp.get("readme_head"):
         add("README beginning (untrusted repo text):\n<<<\n" + smp["readme_head"][:900] + "\n>>>")
     for ex in smp.get("arch_excerpts", []):
-        add(f"Source excerpt of {ex['file']} (untrusted repo text):\n<<<\n{ex['text']}\n>>>")
+        what = ("Notebook excerpt of {f} (headings and the start of each code cell; outputs omitted; untrusted repo text)"
+                if ex["file"].lower().endswith(".ipynb") else "Source excerpt of {f} (untrusted repo text)")
+        add(what.format(f=ex["file"]) + f":\n<<<\n{ex['text']}\n>>>")
 
     files = set(st.get("path_index", [])) | set(st.get("notable_files", []))
     names = {n for n in ([d.lower().replace("_", "-") for d in st.get("dependencies", [])]
