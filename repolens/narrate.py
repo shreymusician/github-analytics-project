@@ -117,6 +117,15 @@ def _is_round(digits: str) -> bool:
     return digits.isdigit() and int(digits) >= 100 and int(digits) % 10 == 0
 
 
+# The same library under its everyday and its import name; evidence usually has the import name.
+_ALIASES = {"pytorch": "torch", "scikitlearn": "sklearn", "opencv": "cv2", "pillow": "pil", "tensorflowkeras": "keras"}
+
+
+def _seen(token: str, evidence_norm: str) -> bool:
+    n = _norm(token)
+    return n in evidence_norm or (n in _ALIASES and _ALIASES[n] in evidence_norm)
+
+
 def _norm(s: str) -> str:
     return re.sub(r"[^a-z0-9]", "", s.lower())
 
@@ -140,10 +149,10 @@ def ungrounded(text: str, cited_text: str, names: set[str]) -> list[str]:
             continue        # "about 1500 commits" for 1524 is a fair rounding, not an invented number
         bad.append(m.strip(","))
     for m in _MIXED.findall(text) + _FILE.findall(text):
-        if _norm(m) not in ev_n:
+        if not _seen(m, ev_n):
             bad.append(m)
     for w in _WORD.findall(text):
-        if _norm(w) in {_norm(x) for x in names} and _norm(w) not in ev_n:
+        if _norm(w) in {_norm(x) for x in names} and not _seen(w, ev_n):
             bad.append(w)
     return sorted(set(bad))
 
@@ -189,6 +198,8 @@ def _validate(data: dict, ids: set[str], files: set[str], texts: dict[str, str],
 
     for key in ("summary", "scope", "audience"):
         v = data.get(key)
+        if key == "audience" and isinstance(v, dict) and v.get("evidence") == []:
+            v = None          # "who it is for" with no citation is the model saying "not stated": no audience, not an error
         out[key] = {"text": v["text"].strip(), "evidence": v["evidence"]} if v and check(v, key) else None
 
     m = data.get("maturity")

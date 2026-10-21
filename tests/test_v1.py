@@ -275,3 +275,14 @@ def test_parser_repairs_unquoted_evidence_ids_and_tolerates_raw_newlines():
     assert _parse('```json\n{"x": {"evidence":[S2,S9]}}\n```')["x"]["evidence"] == ["S2", "S9"]              # fenced and unquoted
     assert _parse("Sure! here you go: " + bad + " hope it helps")["summary"]["evidence"] == ["E38", "E41"]   # chatter around it
     assert _parse("not json at all") is None and _parse('{"evidence": [broken') is None and _parse("[1, 2]") is None
+
+
+def test_uncited_audience_means_none_and_is_not_counted_as_an_error(prof):
+    pk = evidence.build_packet(prof)
+    reply = json.loads(good_reply(pk))
+    reply["audience"] = {"text": "Not stated in the evidence.", "evidence": []}
+    out = narrate(pk, FakeRouter(json.dumps(reply)))
+    assert out["narrative"]["audience"] is None and out["dropped"] == 0
+    reply["scope"] = {"text": "Uncited scope.", "evidence": []}                  # other fields still need a citation
+    out = narrate(pk, FakeRouter(json.dumps(reply)))
+    assert out["narrative"]["scope"] is None and out["dropped"] == 1

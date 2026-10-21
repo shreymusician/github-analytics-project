@@ -211,3 +211,11 @@ def test_ground_truth_helpers_shapes_and_failures():
     assert ext_with(lambda r: httpx.Response(200, json=commits)).last_commit_date("o", "r") == "2026-03-04"
     assert ext_with(lambda r: httpx.Response(200, json=[])).last_commit_date("o", "r") is None
     assert ext_with(lambda r: httpx.Response(200, json={"language": "Python", **GH})).repo_meta("o", "r")["language"] == "Python"
+
+
+def test_everyday_library_names_match_their_import_names():
+    ev = "Third-party modules imported by the code: torch in 11 file(s), sklearn in 2 file(s), cv2 (OpenCV), PIL (Pillow)."
+    assert ungrounded("Built with PyTorch and scikit-learn.", ev, {"torch", "sklearn", "pytorch", "scikit-learn"}) == []
+    assert ungrounded("Uses OpenCV and Pillow.", ev, {"opencv", "pillow"}) == []
+    assert ungrounded("Built with PyTorch.", "numpy only", {"pytorch"}) == ["PyTorch"]       # still caught when truly absent
+    assert ungrounded("Uses TensorFlow.", ev, set()) == ["TensorFlow"]
