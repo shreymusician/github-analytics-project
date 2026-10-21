@@ -1,6 +1,6 @@
 # Status
 
-Last updated: 2026-10-21 (V1: code complete, awaiting human Gate A review)
+Last updated: 2026-10-21 (V1: code complete; Gate A machine-verified, human review waived by owner, see DECISIONS D18)
 
 ## Built and tested (82 tests passing)
 
@@ -36,7 +36,7 @@ Last updated: 2026-10-21 (V1: code complete, awaiting human Gate A review)
 - [x] 1.5 Cache by repo + commit SHA
 - [x] 1.6 Report renderer
 - [x] 1.7 Graceful degradation (no keys / all providers fail -> deterministic report)
-- [~] Gate A exit test: reports for the 10 repos are generated (`reports/gate_a/`, see docs/GATE_A.md); **waiting for the human review and scoring**. Not passed yet.
+- [~] Gate A exit test: reports generated and machine-verified (facts, audit, DeepWiki comparison). The human review was **waived by the owner** (D18): recorded as machine-verified / human-unverified, NOT passed.
 
 Tests use synthetic repos created on the fly (no network). One real-world run was done on a local project (`mini_proj`, a presentation project): the scores and reasons were sensible, and the run surfaced two bugs, now fixed (non-git folders crashed the analyzer; a package named `app` was flagged as an entry point).
 
