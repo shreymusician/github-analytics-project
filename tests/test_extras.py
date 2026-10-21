@@ -199,3 +199,15 @@ def test_inline_evidence_ids_are_not_treated_as_claims():
     assert ungrounded("An archived project [E38] [E41] with 127 commits.", ev, set()) == []
     assert ungrounded("It has 4100 contributors (E41).", ev, set()) == ["4100"]      # real numbers are still checked
     assert ungrounded("See file E2E.py.", "E2E.py", set()) == []                     # E2E is not a citation token
+
+
+def test_ground_truth_helpers_shapes_and_failures():
+    tree = {"truncated": False, "tree": [{"type": "blob", "path": "a.py"}, {"type": "tree", "path": "src"},
+                                         {"type": "blob", "path": "src/b.py"}, {"junk": 1}]}
+    assert ext_with(lambda r: httpx.Response(200, json=tree)).tree_paths("o", "r") == ["a.py", "src/b.py"]
+    assert ext_with(lambda r: httpx.Response(200, json={**tree, "truncated": True})).tree_paths("o", "r") is None
+    assert ext_with(lambda r: httpx.Response(404)).tree_paths("o", "r") is None
+    commits = [{"commit": {"committer": {"date": "2026-03-04T10:00:00Z"}}}]
+    assert ext_with(lambda r: httpx.Response(200, json=commits)).last_commit_date("o", "r") == "2026-03-04"
+    assert ext_with(lambda r: httpx.Response(200, json=[])).last_commit_date("o", "r") is None
+    assert ext_with(lambda r: httpx.Response(200, json={"language": "Python", **GH})).repo_meta("o", "r")["language"] == "Python"

@@ -53,7 +53,24 @@ class External:
             "archived": bool(d.get("archived")), "fork": bool(d.get("fork")),
             "topics": (d.get("topics") or [])[:12], "pushed_at": (d.get("pushed_at") or "")[:10],
             "license": lic.get("spdx_id") if isinstance(lic, dict) else lic,
+            "language": d.get("language"),
         }
+
+    # ---- independent ground truth, used to fact-check our own analyzers (see factcheck.py)
+    def tree_paths(self, owner: str, name: str) -> list[str] | None:
+        """Every file path at the default branch's HEAD according to GitHub (None if unavailable or truncated)."""
+        d = self._get(f"{GITHUB}/repos/{owner}/{name}/git/trees/HEAD", github=True, params={"recursive": "1"})
+        if not isinstance(d, dict) or d.get("truncated") or not isinstance(d.get("tree"), list):
+            return None
+        return [t["path"] for t in d["tree"] if isinstance(t, dict) and t.get("type") == "blob" and "path" in t]
+
+    def last_commit_date(self, owner: str, name: str) -> str | None:
+        """Date (YYYY-MM-DD) of the newest commit on the default branch. Unlike `pushed_at`, other branches do not count."""
+        d = self._get(f"{GITHUB}/repos/{owner}/{name}/commits", github=True, params={"per_page": 1})
+        try:
+            return d[0]["commit"]["committer"]["date"][:10]
+        except (TypeError, KeyError, IndexError):
+            return None
 
     def scorecard(self, owner: str, name: str) -> dict | None:
         d = self._get(f"{SCORECARD}/projects/github.com/{owner}/{name}")
