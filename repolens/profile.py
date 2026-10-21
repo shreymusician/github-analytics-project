@@ -5,7 +5,7 @@ import re
 import time
 from pathlib import Path
 
-from . import evidence, graph, history, narrate as narrate_mod, signals, stack
+from . import architecture as arch_mod, evidence, graph, history, narrate as narrate_mod, signals, stack
 from .fetch import git, github_parts, open_repo, repo_id
 from .files import read_text
 from .redact import redact
@@ -14,6 +14,7 @@ from .storage import Store
 # Bump when analyzer output or the narration prompt changes: cached artifacts from older versions are ignored.
 ANALYZER_VERSION = 8
 K_ANALYSIS, K_NARRATIVE = f"analysis.v{ANALYZER_VERSION}", f"narrative.v{ANALYZER_VERSION}"
+K_ARCH = f"architecture.v{ANALYZER_VERSION}"
 
 README_CHARS, EXCERPT_CHARS, EXCERPT_LINES, EXCERPTS = 1500, 1200, 60, 3
 
@@ -97,7 +98,8 @@ def _head_sha(root: Path) -> str | None:
         return None
 
 
-def run(source: str, store: Store | None = None, router=None, now: float | None = None, external=None) -> dict:
+def run(source: str, store: Store | None = None, router=None, now: float | None = None, external=None,
+        architecture: bool = False) -> dict:
     """Full pipeline. Returns {'profile', 'narrative', 'cache'}.
 
     Cached by (repo, commit SHA): an unchanged repo costs no analysis and no tokens.
@@ -137,5 +139,17 @@ def run(source: str, store: Store | None = None, router=None, now: float | None 
                 # a narration with no surviving summary is a degraded result (e.g. everything was dropped by
                 # grounding): do not cache it, so the next run gets another chance instead of reusing the failure
                 store.put(rid, sha, K_NARRATIVE, narrative)
+    result = {"profile": profile, "narrative": narrative, "cache": cache, "timings": timings}
+    if architecture and router is not None:
+        # opt-in "how it works" stage; only cached when it produced at least one surviving statement
+        cached = store.get(rid, sha, K_ARCH) if (store and sha) else None
+        if cached:
+            result["architecture"], cache["architecture"] = cached, "hit"
+        else:
+            cache["architecture"] = "miss"
+            arch = _timed(timings, "architecture", arch_mod.narrate_architecture, profile, router)
+            result["architecture"] = arch
+            if arch and arch["architecture"]["how_it_works"] and store and sha:
+                store.put(rid, sha, K_ARCH, arch)
     timings["total"] = round(time.perf_counter() - t0, 2)
-    return {"profile": profile, "narrative": narrative, "cache": cache, "timings": timings}
+    return result

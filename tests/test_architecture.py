@@ -76,3 +76,29 @@ def test_retry_on_bad_json_and_failure_returns_none(repo):
 def test_inline_s_citations_are_not_invented_numbers():
     assert ungrounded("The engine loads data (S12, S14).", "engine loads data", set()) == []
     assert ungrounded("It uses 5000 rows [S3].", "engine loads data", set()) == ["5000"]
+
+
+def test_pipeline_stage_is_opt_in_cached_and_not_cached_when_empty(repo):
+    from repolens.storage import Store
+    from tests.test_v1 import good_reply
+    p, packet = pk(repo)
+    from repolens import evidence
+    nar = good_reply(evidence.build_packet(p))
+    store = Store(":memory:")
+
+    off = profile.run(str(repo), store=store, router=FakeRouter(nar))              # default: no extra model call
+    assert "architecture" not in off and "architecture" not in off["cache"]
+
+    store = Store(":memory:")
+    on = profile.run(str(repo), store=store, router=FakeRouter(nar, reply(packet)), architecture=True)
+    assert on["cache"]["architecture"] == "miss" and on["architecture"]["architecture"]["how_it_works"]
+    assert "architecture" in on["timings"]
+    again = profile.run(str(repo), store=store, router=FakeRouter(), architecture=True)   # all cached: no calls at all
+    assert again["cache"] == {"analysis": "hit", "narrative": "hit", "architecture": "hit"}
+
+    store = Store(":memory:")
+    empty = json.dumps({"how_it_works": [], "components": []})
+    r = profile.run(str(repo), store=store, router=FakeRouter(nar, empty), architecture=True)
+    assert r["architecture"]["architecture"]["how_it_works"] == []
+    r2 = profile.run(str(repo), store=store, router=FakeRouter(reply(packet)), architecture=True)   # narrative cached; arch retried
+    assert r2["cache"]["architecture"] == "miss" and r2["architecture"]["architecture"]["how_it_works"]
