@@ -98,6 +98,12 @@ The pipeline combines: (1) lazy analysis, (2) a live discovery agent, (3) depend
 **Known limits:** quality depends on which files are shown. chonkie's report explains the API and CLI but misses the chunkers, because the picker favors well-imported glue files. Cited does not mean complete.
 **Next:** pick files by directory/role (for example the package's largest, most-changed or most-named modules), not only by import counts.
 
+## D20. JS/TS import graph by regex, parser upgrade later
+**Decision:** `repolens/jsgraph.py` extracts JavaScript/TypeScript imports with regular expressions (ES imports, `export ... from`, `require`, dynamic `import()`, comments blanked), resolves relative paths (extensions, `/index`, `.js` for `.ts`), reads `package.json` main/module/bin for entry points, and merges into the same graph as Python. No new dependency.
+**Why:** the TypeScript reports were the weakest (no read-first list, no architecture); this fixes that with the project's own-algorithms approach. Tree-sitter would be more exact but needs a new install.
+**Known limits:** regex, not a parser; tsconfig/bundler path aliases are not resolved, so aliased imports look external (under-reports internal edges, never invents them); other languages (Go, Rust, Java) still have no graph, and the report says so.
+**Related rules added the same day:** test files never lead "read first"; the best one or two entry points always come first; scripts under docs/debug/examples are not entry points; catch-all modules (utils, common, helpers) rank lower.
+
 ## Open questions
 - Product vs. hackathon/college project? (changes polish and scope)
 - Local tool vs. hosted service? (affects sandbox design and key handling)
