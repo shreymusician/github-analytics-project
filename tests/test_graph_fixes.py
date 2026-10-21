@@ -38,3 +38,19 @@ def test_generic_catch_all_modules_rank_below_equal_peers(tmp_path):
     files = [r["file"] for r in graph.analyze_architecture(tmp_path)["read_first"]]
     assert "pkg/engine.py" in files and "pkg/utils.py" in files          # demoted, not excluded
     assert files.index("pkg/engine.py") < files.index("pkg/utils.py")
+
+
+def test_test_files_never_appear_in_read_first(tmp_path):
+    """snips-nlu and llm-scraper listed tests/test_*.py and *.test.ts first: tests import everything, so they score high."""
+    body = "\n".join(f"def f{i}():\n    return {i}" for i in range(8))
+    write(tmp_path, "pkg/__init__.py", "")
+    write(tmp_path, "pkg/engine.py", body + "\n")
+    write(tmp_path, "pkg/parser.py", "from pkg import engine\n" + body + "\n")
+    for i in range(5):
+        write(tmp_path, f"pkg/m{i}.py", f"from pkg import engine, parser\n{body}\n")
+    write(tmp_path, "pkg/tests/test_engine.py", "from pkg import engine, parser, m0, m1, m2, m3, m4\n" + body + "\n")   # imports everything
+    write(tmp_path, "web/a.test.ts", "import { x } from './b'\n" + "export const a = 1\n" * 15)
+    write(tmp_path, "web/b.ts", "export const x = 1\n" * 15)
+    files = [r["file"] for r in graph.analyze_architecture(tmp_path)["read_first"]]
+    assert files and not any("test" in f for f in files)
+    assert "pkg/engine.py" in files

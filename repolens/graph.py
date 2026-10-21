@@ -15,6 +15,7 @@ from pathlib import Path
 
 from .files import iter_files, read_text
 from .jsgraph import JS_EXTS, build_js_graph
+from .signals import _is_test as is_test_path
 
 SRC_ROOTS = ("src", "lib", "app")  # common layouts where the package root is one level down
 
@@ -186,10 +187,11 @@ def rank_read_first(root: Path, edges, paths, entries, pr, imported_by) -> list[
     'foundations' that many modules depend on. Bare re-export `__init__.py` files and trivial
     constants/version/logger modules are skipped (everything imports them; they teach nothing)."""
     subst = {m: substance(root, paths[m]) for m in edges}
-    cand = [m for m in edges if (imported_by[m] or edges[m] or m in entries)
+    pool = [m for m in edges if not is_test_path(paths[m])] or list(edges)   # tests import everything: they never lead
+    cand = [m for m in pool if (imported_by[m] or edges[m] or m in entries)
             and subst[m] >= MIN_SUBSTANCE and _stem(m) not in TRIVIAL_NAMES]
     if len(cand) < 5:                      # tiny repo: do not filter, there is little to choose from
-        cand = [m for m in edges if imported_by[m] or m in entries]
+        cand = [m for m in pool if imported_by[m] or m in entries]
     if not cand:
         return []
     max_pr = max(pr[m] for m in cand) or 1
