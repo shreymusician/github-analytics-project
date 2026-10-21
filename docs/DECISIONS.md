@@ -78,6 +78,12 @@ The pipeline combines: (1) lazy analysis, (2) a live discovery agent, (3) depend
 **Decision:** `NARRATE_MAX_TOKENS = 2500`, and narrate() waits once (up to 45 s) when a provider will recover soon.
 **Why:** Groq's free tier counts max_tokens against an 8,000 tokens-per-minute budget before generating, so a 4,000 reservation caused 429s even though real output is under 1,000 tokens.
 
+## D17. Verify with independent sources before asking a human
+**Decision:** before asking the reviewer to grade reports, run (1) a fact-check against GitHub's own data using separate, simple logic, and (2) a second-model audit of every claim, with a planted-falsehood control to show the judge is not simply approving everything. Ask the human only for what machines cannot judge: whether a report is useful.
+**Why:** the human is the scarce resource, and the audit already found real defects (guessed audiences, reading-list reasons inferred from file names).
+**Honest limits:** the facts are easy and the rules are simple on both sides; the judge sees the same evidence the narrator saw; four planted claims show sensitivity to obvious errors only. None of this answers "is it insightful".
+**Related:** judge independence is recorded per audit (narrator and judge are different providers when possible); a self-graded audit is flagged, not hidden.
+
 ## Open questions
 - Product vs. hackathon/college project? (changes polish and scope)
 - Local tool vs. hosted service? (affects sandbox design and key handling)
