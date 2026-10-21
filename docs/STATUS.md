@@ -2,7 +2,7 @@
 
 Last updated: 2026-10-21 (V1: code complete, awaiting human Gate A review)
 
-## Built and tested (57 tests passing)
+## Built and tested (69 tests passing)
 
 | Component | File | Notes |
 |---|---|---|
@@ -22,6 +22,8 @@ Last updated: 2026-10-21 (V1: code complete, awaiting human Gate A review)
 | Third-party import detection | `repolens/graph.py` | Works without any manifest; alias map (PIL -> Pillow); import-derived capability tags |
 | External signals (fail-soft) | `repolens/external.py` | GitHub facts (+ ecosyste.ms fallback), OpenSSF Scorecard, repo search and manifest deps (V3 helpers). Live-tested; `--offline` skips |
 | Citation grounding | `repolens/narrate.py` | Names/files/numbers must exist in the packet; wrong citations repaired, unsupported statements dropped with reasons (D13) |
+| Labels store | `repolens/labels.py`, `scripts/make_labels.py`, `data/labels/gate_a.csv` | Human review scores beside machine scores; refreshing never overwrites human cells |
+| Timing breakdown | `repolens/profile.py` (`timings`), CLI stderr | fetch / analysis (per analyzer) / external / narration / total |
 | Provider smoke test | `repolens/llm/smoke.py` | `python -m repolens.llm.smoke` (needs keys; **not yet run**) |
 
 ## V1 checklist (see ROADMAP.md)
@@ -47,9 +49,11 @@ Tests use synthetic repos created on the fly (no network). One real-world run wa
 Fine-grained, public-read-only token works: 5,000 core requests/hour, **search 30/min**, **code search only 10/min**. Code search is the tight one: V3's dependency-graph search (3.1) must batch, cache and back off, not fire a query per candidate. Not used by V1 (clones use plain `git`).
 
 ## Gate A run on 10 real repos (2026-10-21)
-Result of the machine side: 10/10 analyzed, 10/10 narrated, 0 crashes, 1 statement dropped by grounding. Warm-cache runs 5 to 28 s; cold (with clone) up to 162 s.
+Result of the machine side (analyzer version 7): 10/10 analyzed, 10/10 narrated, 0 crashes, 2 statements dropped by grounding. Warm runs 5 to 19 s. Cold (with clone) was up to 162 s before the history fix; a cold chonkie run is now 22 s (was 63 s, history step 41 s to 0.2 s by disabling rename detection in partial clones).
 
 The first run exposed nine defects that 42 synthetic tests had not (asset-skewed composition, missed setup.py manifests, over-confident scores on non-Python repos, false tests/stubs, noisy read-first lists, rejected non-Python reading suggestions, over-strict number grounding, rate-limit failures, stale cache after analyzer changes). All are fixed with regression tests; the per-fix reasoning is in the commit messages. Lesson: tests built from my own assumptions missed what ten real repos found in one afternoon.
+
+Regenerating the reports surfaced four more bugs, all fixed with tests: inline evidence IDs read as invented numbers (wiped one repo's narration), 503 benching a provider for 60 s, a degraded narration getting cached, and real files rejected as reading suggestions.
 
 Still unverified: whether a human finds the reports insightful and accurate. That is the actual Gate A question.
 
@@ -62,7 +66,8 @@ Still unverified: whether a human finds the reports insightful and accurate. Tha
 - Not yet run: the GitHub clone path, the external signals inside a full `run()` on a real GitHub repo, and Gemini narration after the grounding change (Gemini was tested before it).
 
 ## Known limitations
-- Large `.txt` files (e.g. monodepth2 split lists) are classified as docs, inflating "docs" share; they are data.
+- `.txt` over 100 KB is classified as data (heuristic); a long hand-written .txt would be misclassified.
+- Path index is capped at 4,000 paths per profile; very large repos are indexed partially.
 - The import graph and stub/TODO checks cover Python only; notebook-heavy and non-Python repos get "partial" analysis and no read-first list.
 - Maturity labels come from the model and can disagree with the numeric scores.
 - Groq free tier: 8,000 tokens per minute is the binding limit for batch runs, not the daily cap.
