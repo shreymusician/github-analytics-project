@@ -226,3 +226,14 @@ def test_narration_reserves_a_modest_token_budget(prof):
 
     narrate(evidence.build_packet(prof), Spy())
     assert seen["max_tokens"] <= 3000 and seen["json_mode"] is True
+
+
+def test_run_reports_where_time_went(repo):
+    store = Store(":memory:")
+    first = profile.run(str(repo), store=store)
+    t = first["timings"]
+    assert {"fetch", "analysis", "analysis_detail", "total"} <= set(t)
+    assert set(t["analysis_detail"]) == {"stack", "graph", "history", "signals", "samples"}
+    assert all(v >= 0 for k, v in t.items() if k != "analysis_detail") and t["total"] >= t["analysis"]
+    again = profile.run(str(repo), store=store)               # cache hit: no analysis work to time
+    assert "analysis" not in again["timings"] and "narration" not in again["timings"]

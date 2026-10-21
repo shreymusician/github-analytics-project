@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+import time
 from pathlib import Path
 
 from . import evidence, graph, history, narrate as narrate_mod, signals, stack
@@ -27,15 +28,25 @@ def _samples(root: Path, st: dict, arch: dict) -> dict:
     return out
 
 
-def analyze_root(root: Path, source: str, sha: str | None, now: float | None = None) -> dict:
-    st = stack.detect_stack(root)
-    arch = graph.analyze_architecture(root)
-    hist = history.analyze_history(root, now=now)
-    sig = signals.assess(root, st, arch, hist)
+def _timed(sink: dict | None, key: str, fn, *args, **kw):
+    """Run fn and, if a dict was given, record how many seconds it took under `key`."""
+    t = time.perf_counter()
+    out = fn(*args, **kw)
+    if sink is not None:
+        sink[key] = round(time.perf_counter() - t, 2)
+    return out
+
+
+def analyze_root(root: Path, source: str, sha: str | None, now: float | None = None,
+                 timings: dict | None = None) -> dict:
+    st = _timed(timings, "stack", stack.detect_stack, root)
+    arch = _timed(timings, "graph", graph.analyze_architecture, root)
+    hist = _timed(timings, "history", history.analyze_history, root, now=now)
+    sig = _timed(timings, "signals", signals.assess, root, st, arch, hist)
     from_imports = [t for t in stack.tags_for_imports(arch.get("third_party_imports", [])) if t not in st["capability_tags"]]
     st["capability_tags"] = st["capability_tags"] + from_imports
     st["tags_from_imports"] = from_imports
-    samples = _samples(root, st, arch)
+    samples = _timed(timings, "samples", _samples, root, st, arch)
     st.pop("_paths")
     return {"repo": source, "sha": sha, "stack": st, "architecture": arch, "history": hist,
             "samples": samples, **sig}
@@ -60,8 +71,10 @@ def run(source: str, store: Store | None = None, router=None, now: float | None 
     Cached by (repo, commit SHA): an unchanged repo costs no analysis and no tokens.
     `narrative` is None when no router/keys are available or every provider failed.
     """
+    t0 = time.perf_counter()
+    timings: dict = {}
     rid = repo_id(source)
-    root = open_repo(source)
+    root = _timed(timings, "fetch", open_repo, source)       # clone on first sight, fetch afterwards
     sha = _head_sha(root)
     cache = {"analysis": "n/a", "narrative": "n/a"}
 
@@ -69,10 +82,13 @@ def run(source: str, store: Store | None = None, router=None, now: float | None 
     if profile:
         cache["analysis"] = "hit"
     else:
-        profile = analyze_root(root, source, sha, now)
+        detail: dict = {}
+        profile = _timed(timings, "analysis", analyze_root, root, source, sha, now, timings=detail)
+        timings["analysis_detail"] = detail          # per analyzer: stack, graph, history, signals, samples
         parts = github_parts(source)
         if external is not None and parts:
-            profile["external"] = external.gather(*parts)   # snapshot as of analysis time; cached with the SHA
+            # snapshot as of analysis time; cached with the SHA
+            profile["external"] = _timed(timings, "external", external.gather, *parts)
         cache["analysis"] = "miss"
         if store and sha:
             store.put(rid, sha, K_ANALYSIS, profile)
@@ -84,7 +100,8 @@ def run(source: str, store: Store | None = None, router=None, now: float | None 
             narrative, cache["narrative"] = cached, "hit"
         else:
             cache["narrative"] = "miss"
-            narrative = narrate_mod.narrate(evidence.build_packet(profile), router)
+            narrative = _timed(timings, "narration", narrate_mod.narrate, evidence.build_packet(profile), router)
             if narrative and store and sha:
                 store.put(rid, sha, K_NARRATIVE, narrative)
-    return {"profile": profile, "narrative": narrative, "cache": cache}
+    timings["total"] = round(time.perf_counter() - t0, 2)
+    return {"profile": profile, "narrative": narrative, "cache": cache, "timings": timings}
