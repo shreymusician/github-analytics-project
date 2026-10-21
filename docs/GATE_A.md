@@ -48,6 +48,42 @@ Optional baseline: open `deepwiki.com/<owner>/<repo>` for 3 or 4 repos and note 
 
 Your scores also become the first labeled data for V2 calibration. Record them in a table at the bottom of this file as you go.
 
+## Where the reports are, and how they were produced
+
+Reports are on disk in `reports/gate_a/` (git-ignored; regenerate any time with `python scripts/gate_a.py`, about 5 to 30 seconds per repo once cloned). Each repo has a `.md` report to read and a `.json` with the full evidence. Earlier passes are kept for comparison: `reports/gate_a_v1/` (first run) and `reports/gate_a_v2/` (after the first round of fixes). Clones are cached under `.cache/repos/`.
+
+First-run timing, including cloning: chonkie 162 s, lightly 123 s, image-super-resolution 89 s, snips-nlu 80 s, the rest under 25 s. That misses the proposed "under 60 s per repo" target for the four bigger repos on a cold cache; warm-cache runs are 5 to 28 s. Most of the cold time is the clone (not yet measured separately).
+
+## What changed between the first run and the one you are reviewing
+
+The first run exposed defects that the synthetic tests could not. They are fixed (see git history from `chore: stop tracking generated Gate A reports` onward), so read the current reports, not the v1 ones.
+
+| First-run problem | Fix |
+|---|---|
+| 5 of 10 reports opened with "dominated by media/other files" (images and weights swamping byte counts) | Composition now separates what the authors wrote from binary assets |
+| snips-nlu and image-super-resolution reported "no dependency manifest" (they use setup.py) | setup.py / setup.cfg / Pipfile / conda env files are parsed (statically, never executed) |
+| llm-scraper (TypeScript) scored Completeness 100 because Python-only checks silently passed | Those checks are now "not assessed" and excluded; the report says the analysis is partial |
+| monodepth2's demo script test_simple.py counted as a test | A test file must actually contain tests |
+| Abstract methods counted as unfinished stubs | They are skipped |
+| "Read these first" favored constants.py, logger.py, bare __init__.py | Ranked by entry point, hub role and substance |
+| Model suggestions like README.md or a notebook were rejected as "not found" | Notable non-Python files are valid suggestions |
+| Rounded figures ("about 1500 commits") dropped true statements | Round figures within 10% are accepted |
+| Narration missing for some repos during the batch | Waits once for rate limits; asks for fewer tokens (Groq's 8,000 tokens/minute budget) |
+
+Current state of the rerun: 10 of 10 narrated, 0 crashes, 1 statement dropped in total (llm-scraper: "Node.js" was not in the evidence).
+
+## Known weak spots to look for while scoring
+
+These are things I already suspect are wrong or weak. Please say if they bother you.
+
+- **Scores are still my guesses.** Completeness and deployability weights are uncalibrated; your "too low / about right / too high" answers are what will calibrate them.
+- **Notebook-heavy repos (#3, #8, #9)**: the import graph does not read notebooks, so architecture details are thin.
+- **llm-scraper (#10)**: analysis depth is partial by design; there is no "read first" list because the graph is Python-only. Judge whether the narration is still useful without it.
+- **monodepth2 (#4)**: its authored content shows as 98.7% "docs" because large `.txt` split lists count as documents. Probably a misclassification (they are data).
+- **Maturity labels** (prototype / working-demo / usable) come from the model reading the rule results, so they can disagree with the numeric scores. Chonkie got "working-demo" despite a 100/90 score.
+- **Narration is from one model family**, mostly Groq gpt-oss-120b, with Gemini as fallback; wording and judgment can vary between runs of the same repo.
+- **The citations check names, filenames and numbers, not meaning.** A statement can pass and still be misleading, so please flag any claim that feels wrong even if it looks cited.
+
 ## Results
 
 | # | Repo | Insight | False statements | Completeness | Deployability | Read-first | Trust | Notes |
