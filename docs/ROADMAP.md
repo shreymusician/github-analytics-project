@@ -59,7 +59,7 @@ V0 Foundation ──> V1 Single-Repo Brain ──> V2 Trust ──> V3 Find ─�
 | 2.2 | Weight calibration | Tune rule weights against the labels; report agreement per signal. Consider a small logistic model *(your own algorithm)* if hand-tuning plateaus. |
 | 2.3 | Confidence levels | Scores come with high/medium/low confidence and say what was not checked. |
 | 2.4 | JS/TS import graph | **Done early (regex version, D20)**: JavaScript/TypeScript imports, `package.json` entry points. Still to do: a real parser (tree-sitter) for exactness and path aliases; Go, Rust, Java. |
-| 2.5 | Notebook support | Many AI/ML repos are Jupyter-first: extract cells, imports and outputs. |
+| 2.5 | Notebook support | **Done early (D21)**: outline, imports, reading view; notebook-first repos get their busiest notebooks explained. Still to do: cross-notebook structure, outputs-aware summaries (deliberately skipped), notebooks over 30 MB. |
 | 2.6 | Richer taxonomy | Expand the AI/ML library taxonomy; add pattern detectors (RAG pipeline, training loop, fine-tuning, agent loop). |
 | 2.7 | Regression suite | Frozen expected outputs for the labeled repos; any change that moves scores must be deliberate. |
 
