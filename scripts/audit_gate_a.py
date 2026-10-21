@@ -3,6 +3,7 @@
 Reads reports/gate_a/NN_*.json, writes reports/gate_a/audit.json, prints a table. Uses your own API keys.
 """
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -12,7 +13,7 @@ load_dotenv(".env")
 from repolens import architecture, audit, evidence
 from repolens.llm.router import LLMRouter, keys_from_env
 
-REPORTS = Path("reports/gate_a")
+REPORTS = Path(os.environ.get("GATE_A_DIR", "reports/gate_a"))   # GATE_A_DIR: audit another run
 
 
 def main() -> int:

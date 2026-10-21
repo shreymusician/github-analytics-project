@@ -12,7 +12,7 @@ from repolens.storage import Store
 REPOS = ["feyninc/chonkie", "lightly-ai/lightly", "roboflow/sports", "nianticlabs/monodepth2", "jaymody/picoGPT",
          "snipsco/snips-nlu", "idealo/image-super-resolution", "andri27-ts/Reinforcement-Learning",
          "raiyanyahya/how-to-train-your-gpt", "mishushakov/llm-scraper"]
-out = Path("reports/gate_a"); out.mkdir(parents=True, exist_ok=True)
+out = Path(os.environ.get("GATE_A_DIR", "reports/gate_a")); out.mkdir(parents=True, exist_ok=True)   # GATE_A_DIR: write elsewhere
 router = LLMRouter(keys=keys_from_env(), timeout=120)
 ext = External(github_token=os.environ.get("GITHUB_TOKEN"))
 store = Store(".cache/repolens.db")
