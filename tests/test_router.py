@@ -98,3 +98,25 @@ def test_groq_gpt_oss_gets_low_reasoning_effort():
 
     make(handler).ask([])
     assert seen["reasoning_effort"] == "low"
+
+
+def test_soonest_available():
+    t = [0.0]
+    calls = {"n": 0}
+
+    def handler(req):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return httpx.Response(429, headers={"retry-after": "20"})
+        return httpx.Response(200, json={"choices": [{"message": {"content": "{}"}}]})
+
+    r = LLMRouter(keys={"groq": "k"}, client=httpx.Client(transport=httpx.MockTransport(handler)), clock=lambda: t[0])
+    with pytest.raises(AllProvidersFailed):
+        r.ask([])
+    assert r.soonest_available() == 20
+    t[0] = 25
+    assert r.soonest_available() == 0
+    dead = LLMRouter(keys={"groq": "k"}, client=httpx.Client(transport=httpx.MockTransport(lambda q: httpx.Response(401))))
+    with pytest.raises(AllProvidersFailed):
+        dead.ask([])
+    assert dead.soonest_available() is None

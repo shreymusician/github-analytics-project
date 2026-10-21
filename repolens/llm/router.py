@@ -80,6 +80,12 @@ class LLMRouter:
                 errors[name] = e.reason
         raise AllProvidersFailed(errors)
 
+    def soonest_available(self) -> float | None:
+        """Seconds until some non-dead provider leaves cooldown (0 if one is ready now); None if none will."""
+        now = self.clock()
+        waits = [max(0.0, st.cooldown_until - now) for st in self._state.values() if not st.dead]
+        return min(waits) if waits else None
+
     def _call(self, p: Provider, messages, temperature, max_tokens, json_mode) -> str:
         body = {"model": p.model(), "messages": messages,
                 "temperature": temperature, "max_tokens": max_tokens, **p.extra_params()}
