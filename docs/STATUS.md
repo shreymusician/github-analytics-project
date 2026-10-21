@@ -2,7 +2,7 @@
 
 Last updated: 2026-10-21 (V1: code complete; Gate A machine-verified, human review waived by owner, see DECISIONS D18)
 
-## Built and tested (82 tests passing)
+## Built and tested (96 tests passing)
 
 | Component | File | Notes |
 |---|---|---|
@@ -22,6 +22,7 @@ Last updated: 2026-10-21 (V1: code complete; Gate A machine-verified, human revi
 | Third-party import detection | `repolens/graph.py` | Works without any manifest; alias map (PIL -> Pillow); import-derived capability tags |
 | External signals (fail-soft) | `repolens/external.py` | GitHub facts (+ ecosyste.ms fallback), OpenSSF Scorecard, repo search and manifest deps (V3 helpers). Live-tested; `--offline` skips |
 | Citation grounding | `repolens/narrate.py` | Names/files/numbers must exist in the packet; wrong citations repaired, unsupported statements dropped with reasons (D13) |
+| "How it works" stage | `repolens/architecture.py` | Reads up to 6 source excerpts (any language), cited S-IDs, shared grounding rules; opt-in `run(architecture=True)`; all 10 Gate A repos have one |
 | Fact-check vs GitHub | `repolens/factcheck.py`, `scripts/fact_check.py` | Independent file-list / commit-date checks; 78 of 80 facts agree on the Gate A repos |
 | Second-model audit | `repolens/audit.py`, `scripts/audit_gate_a.py`, `scripts/audit_selftest.py` | A different model judges every claim; 102 of 103 supported; planted-falsehood control 3/3 |
 | Labels store | `repolens/labels.py`, `scripts/make_labels.py`, `data/labels/gate_a.csv` | Human review scores beside machine scores; refreshing never overwrites human cells |
@@ -72,6 +73,8 @@ Still unverified: whether a human finds the reports insightful and accurate. Tha
 - Not yet run: the GitHub clone path, the external signals inside a full `run()` on a real GitHub repo, and Gemini narration after the grounding change (Gemini was tested before it).
 
 ## Known limitations
+- "How it works" depends on which files are shown: chonkie's explanation misses the chunkers (the picker favors well-imported glue files); snips-nlu's first step is about docs scripts. Cited does not mean complete (D19).
+- Audit independence: when the other provider is unavailable the judge can be the narrator; this is flagged per audit (`independent: False`), never hidden. On the last run Groq's DAILY budget (200,000 tokens) was exhausted by development testing, so most audits were self-graded until it reset.
 - `.txt` over 100 KB is classified as data (heuristic); a long hand-written .txt would be misclassified.
 - Path index is capped at 4,000 paths per profile; very large repos are indexed partially.
 - The import graph and stub/TODO checks cover Python only; notebook-heavy and non-Python repos get "partial" analysis and no read-first list.
