@@ -125,6 +125,12 @@ The pipeline combines: (1) lazy analysis, (2) a live discovery agent, (3) depend
 **Honest limits:** the questions are ones our report is designed to answer (maintenance, tests, CI, Docker, license, archived), and READMEs rarely cover them, so this shows the health layer works, not that the report is better overall. The "dependencies" question is graded against DECLARED dependencies only, so plausible answers can be marked wrong (roboflow/sports). It checks that facts are findable, not that the report is insightful.
 **Use:** re-run after every change as a regression check (`scripts/answerability.py`).
 
+## D25. Discovery starts as cheap, explainable ranking; the deep analysis stays opt-in
+**Decision:** `repolens.find` (V3 stage A) turns a goal into keyword queries (a model writes them; anything with a ":" operator is rejected so neither the model nor text injected through the goal can steer the GitHub search), searches GitHub, checks declared dependencies through ecosyste.ms (no clone), asks a model to rate the best 12 candidates 0 to 3 from their metadata, and ranks with a score whose parts are all shown. Stage B (cloning and fully analyzing finalists) is not automatic because it downloads other people's repositories; it is a separate step that needs the user's go-ahead.
+**Why:** the first live run showed keywords and stars alone put curated lists and tangential tools at the top. Detecting collections (-0.20, labelled, last in the reading order), a model's reading of the description (it carries most of the relevance weight once available) and a smaller archived penalty (-0.05, since archived code is just as readable) made the list sensible.
+**Weights (uncalibrated):** relevance 0.45 (keywords alone) or 0.15 keywords + 0.30 model; freshness 0.20; popularity 0.15 (log stars); learnability 0.15 (smaller is easier); stack match up to +0.10; penalties for collections, off-topic and archived. They are first guesses and are shown to the user for that reason.
+**Limits:** it does not know whether a repo is complete or well written; GitHub search only sees names, descriptions and topics; one live goal was checked by eye by the author, not by a user.
+
 ## Open questions
 - Product vs. hackathon/college project? (changes polish and scope)
 - Local tool vs. hosted service? (affects sandbox design and key handling)
