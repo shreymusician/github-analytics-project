@@ -28,9 +28,13 @@ MAX_QUERIES = 4
 MIN_STARS = 50
 
 QUERY_SYSTEM = """You turn a learner's goal into GitHub repository search queries.
-Reply with ONE JSON object and nothing else: {"queries": ["...", "..."]}
-Rules: 2 to 4 queries; each is 1 to 4 plain keywords that real repositories use in their name, description or topics
-(for example "rag chatbot", "retrieval augmented generation", "vector search"). Use no search operators or colons."""
+Reply with ONE JSON object and nothing else: {"queries": ["...", "..."], "topics": ["...", "..."]}
+Rules for "queries": 2 to 4 queries; each is 1 to 4 plain keywords that real repositories use in their name or
+description (for example "rag chatbot", "retrieval augmented generation"). No search operators, no colons.
+Rules for "topics": 2 to 3 GitHub topic names, lowercase with hyphens, that projects on this subject are tagged with
+(for example "recommender-system", "sentiment-analysis", "reinforcement-learning"). Use single topics, not lists."""
+MAX_TOPICS = 3
+_TOPIC = re.compile(r"[a-z0-9]+(-[a-z0-9]+)*")
 
 
 def goal_terms(goal: str) -> list[str]:
@@ -68,16 +72,26 @@ def queries_for_goal(goal: str, router=None) -> tuple[list[str], str]:
                                         max_tokens=400)
             data = _parse(text) or {}
             qs = [c for c in (clean_query(q) for q in (data.get("queries") or [])) if c]
-            if qs:
-                merged = list(dict.fromkeys(qs[:MAX_QUERIES] + base[:1]))      # always keep the goal's own words too
-                return merged[:MAX_QUERIES + 1], "model"
+            topics = [f"topic:{t}" for t in (clean_topic(t) for t in (data.get("topics") or [])) if t][:MAX_TOPICS]
+            if qs or topics:
+                keywords = list(dict.fromkeys(qs[:MAX_QUERIES] + base[:1]))    # always keep the goal's own words too
+                return keywords[:MAX_QUERIES + 1] + topics, "model"
         except AllProvidersFailed:
             pass
     return base, "keywords"
 
 
-def build_search_query(q: str, language: str | None, today: date, max_age_days: int = 730, min_stars: int = MIN_STARS) -> str:
-    parts = [q if q.startswith("topic:") else f"{q} in:name,description,readme"]
+def clean_topic(t) -> str | None:
+    """A model-suggested GitHub topic, accepted only as a plain lowercase slug (so it cannot carry operators)."""
+    t = t.strip().lower() if isinstance(t, str) else ""
+    return t if 2 <= len(t) <= 40 and _TOPIC.fullmatch(t) else None
+
+
+def build_search_query(q: str, language: str | None, today: date, max_age_days: int = 1460, min_stars: int = MIN_STARS) -> str:
+    # README text is deliberately NOT searched: a mega-popular repo that mentions a word anywhere in its README would
+    # fill a stars-sorted result list and push out the real, smaller projects. Four years back keeps classic
+    # learning repositories; freshness is handled by the score, not by excluding them.
+    parts = [q if q.startswith("topic:") else f"{q} in:name,description,topics"]
     parts += [f"stars:>{min_stars}", f"pushed:>{(today - timedelta(days=max_age_days)).isoformat()}", "fork:false"]
     if language:
         parts.append(f"language:{language}")

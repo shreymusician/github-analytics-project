@@ -64,8 +64,9 @@ def test_model_trouble_falls_back_to_the_goals_words():
 
 def test_search_query_has_filters_and_topic_queries_are_not_wrapped():
     q = d.build_search_query("rag chatbot", "python", TODAY)
-    assert q == "rag chatbot in:name,description,readme stars:>50 pushed:>2024-10-21 fork:false language:python"
-    assert d.build_search_query("topic:rag", None, TODAY) == "topic:rag stars:>50 pushed:>2024-10-21 fork:false"
+    assert q == "rag chatbot in:name,description,topics stars:>50 pushed:>2022-10-22 fork:false language:python"
+    assert "readme" not in q                                    # README text would let giant repos crowd out real projects
+    assert d.build_search_query("topic:rag", None, TODAY) == "topic:rag stars:>50 pushed:>2022-10-22 fork:false"
 
 
 def test_gather_merges_duplicates_and_remembers_which_queries_found_them():
@@ -283,3 +284,21 @@ def test_cli_reports_rate_limiting_with_its_own_exit_code(monkeypatch, capsys):
     from repolens import find
     monkeypatch.setattr(find, "gather", lambda *a, **k: (_ for _ in ()).throw(d.SearchLimited("GitHub search is rate limited right now")))
     assert find.main(["rag chatbot", "--no-llm"]) == 3 and "rate limited" in capsys.readouterr().err
+
+
+def test_topics_are_accepted_only_as_plain_slugs():
+    assert d.clean_topic("recommender-system") == "recommender-system" and d.clean_topic("  NLP ") == "nlp"
+    for bad in ("user:evil", "a b", "x", "topic:rag", "rag!", "-rag", "rag-", "a" * 41, None, 5, "", "rag chatbot"):
+        assert d.clean_topic(bad) is None, bad
+
+
+def test_model_topics_become_topic_searches_next_to_the_keyword_queries():
+    r = FakeRouter(json.dumps({"queries": ["movie recommender"], "topics": ["recommender-system", "user:evil", "collaborative-filtering", "a b"]}))
+    qs, how = d.queries_for_goal("build a movie recommender system", r)
+    assert how == "model" and "movie recommender" in qs
+    assert [q for q in qs if q.startswith("topic:")] == ["topic:recommender-system", "topic:collaborative-filtering"]
+    assert not any("evil" in q for q in qs)
+    only_topics, how2 = d.queries_for_goal("movie recommender", FakeRouter(json.dumps({"queries": ["a:b"], "topics": ["recommender-system"]})))
+    assert how2 == "model" and "topic:recommender-system" in only_topics            # topics alone are enough to count as a model answer
+    capped = d.queries_for_goal("x y", FakeRouter(json.dumps({"topics": [f"topic-{i}" for i in range(9)]})))[0]
+    assert len([q for q in capped if q.startswith("topic:")]) == d.MAX_TOPICS
