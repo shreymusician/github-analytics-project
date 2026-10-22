@@ -281,12 +281,74 @@ def learning_order(ranked: list[dict]) -> list[dict]:
     return sorted(ranked, key=lambda c: (bool(c.get("collection")), -_learnability(c.get("size_kb")), -c["score"], c["full_name"]))
 
 
+def deep_facts(result: dict) -> dict:
+    """The facts a learner needs, pulled from a full `profile.run()` result."""
+    p, n = result["profile"], (result.get("narrative") or {}).get("narrative") or {}
+    ci = next((e["note"] for e in p["deployability"]["evidence"] if e["ok"] is True and e["note"].startswith("CI pipeline configured")), None)
+    ok = lambda area, start: any(e["ok"] is True and e["note"].startswith(start) for e in p[area]["evidence"])
+    h = p["history"]
+    return {"status": h.get("status"), "last_commit": h.get("last_commit"), "commits": h.get("commits"),
+            "contributors": h.get("contributors"), "tests": p["metrics"]["test_files"],
+            "ci": ci.removeprefix("CI pipeline configured ").strip("()") if ci else None,
+            "docker": ok("deployability", "Dockerfile present"), "license": ok("completeness", "license present"),
+            "completeness": p["completeness"]["score"], "deployability": p["deployability"]["score"],
+            "depth": p["analysis_depth"], "maturity": (n.get("maturity") or {}).get("level"),
+            "summary": (n.get("summary") or {}).get("text"),
+            "read_first": [r["file"] for r in p["architecture"].get("read_first", [])[:3]]}
+
+
+def deep_analyze(ranked: list[dict], analyze, n: int, save=None, progress=None) -> dict[str, dict]:
+    """Stage B: run the full analyzer on the first `n` ranked repositories.
+
+    `analyze(full_name)` returns a `profile.run()` result (it clones the repo); `save(full_name, result)` may write
+    the full report. One repository failing (clone error, anything) is recorded as {"error": ...} and never stops
+    the others. Returns {full_name: facts or {"error": ...}}."""
+    out: dict[str, dict] = {}
+    for c in ranked[:n]:
+        name = c["full_name"]
+        if progress:
+            progress(f"analyzing {name} ...")
+        try:
+            result = analyze(name)
+            out[name] = deep_facts(result)
+            if save:
+                save(name, result)
+        except Exception as e:                       # noqa: BLE001 - one bad repo must not abort the batch
+            out[name] = {"error": f"{type(e).__name__}: {str(e)[:200]}"}
+    return out
+
+
+NEUTRAL = 50     # a repository that was not analyzed in depth counts as "unknown", not as good or bad
+
+
+def apply_deep(ranked: list[dict], deep: dict[str, dict]) -> list[dict]:
+    """Fold the deep facts into the score and re-sort. Every repository gets the same kind of parts (the analyzed ones
+    from real facts, the others neutral) so the totals stay comparable. Weights are uncalibrated first guesses."""
+    out = []
+    for c in ranked:
+        d = deep.get(c["full_name"])
+        facts = d if d and "error" not in d else None
+        comp = facts["completeness"] if facts else NEUTRAL
+        dep = facts["deployability"] if facts else NEUTRAL
+        parts = {**c["parts"], "completeness": round(0.15 * comp / 100, 3), "runnable": round(0.05 * dep / 100, 3)}
+        if facts and facts["status"] == "abandoned":
+            parts["abandoned penalty"] = -0.10
+        out.append({**c, "parts": parts, "score": round(sum(parts.values()), 3), "deep": d})
+    out.sort(key=lambda c: (-c["score"], -c["stars"], c["full_name"]))
+    return out
+
+
 def render_guide(goal: str, ranked: list[dict], how: str, queries: list[str], language: str | None = None,
                  requested_top: int | None = None) -> str:
+    n_deep = sum(1 for c in ranked if c.get("deep") and "error" not in c["deep"])
+    stage = ("_Ranked from GitHub search data (relevance, freshness, popularity, size, and a model's reading of each description). "
+             + (f"{n_deep} of these were also cloned and analyzed in depth (health, tests, CI, completeness); the others were not, "
+                "so their completeness and code quality are NOT assessed and count as neutral. "
+                if n_deep else "Nothing was cloned, so completeness and code quality are NOT assessed. ")
+             + "Scores are uncalibrated first guesses._")
     L = [f"# Repos to study for: {goal}", "",
          f"_Search queries ({how}): {', '.join(f'`{q}`' for q in queries)}" + (f"; language: {language}" if language else "") + "._",
-         "_Stage A: ranked from GitHub search data only (relevance, freshness, popularity, size). Nothing was cloned, so "
-         "completeness and code quality are NOT assessed. Scores are uncalibrated first guesses._", ""]
+         stage, ""]
     if not ranked:
         return "\n".join(L + ["No repositories found. Try different words, or drop the language filter."]) + "\n"
     if any(c.get("weak") for c in ranked):
@@ -309,6 +371,19 @@ def render_guide(goal: str, ranked: list[dict], how: str, queries: list[str], la
             L.append(f"   - model's view ({c['llm_relevance']}/3): {c['llm_why']}")
         if c.get("collection"):
             L.append("   - note: looks like a **collection of other projects**, handy for finding ideas but not one implementation to study")
+        dp = c.get("deep")
+        if dp and "error" in dp:
+            L.append(f"   - deep analysis failed: {dp['error']}")
+        elif dp:
+            L.append(f"   - **in depth:** {dp['status']} (last commit {dp['last_commit']}, {dp['commits']} commits, {dp['contributors']} contributor(s)); "
+                     f"tests: {'yes (' + str(dp['tests']) + ' files)' if dp['tests'] else 'no'}; CI: {dp['ci'] or 'none'}; "
+                     f"Docker: {'yes' if dp['docker'] else 'no'}; license: {'yes' if dp['license'] else 'no'}; "
+                     f"completeness {dp['completeness']}/100, deployability {dp['deployability']}/100"
+                     + (f"; maturity: {dp['maturity']}" if dp.get("maturity") else ""))
+            if dp.get("summary"):
+                L.append(f"   - what it is: {dp['summary']}")
+            if dp.get("read_first"):
+                L.append(f"   - start reading: {', '.join(f'`{f}`' for f in dp['read_first'])}")
     L += ["", "## Suggested reading order (easiest first)", ""]
     L += [f"{i}. {c['full_name']}" for i, c in enumerate(learning_order(ranked), 1)]
     L += ["", "To go deeper on one of these (this clones it, so ask first): `python -m repolens owner/name --md report.md`."]
