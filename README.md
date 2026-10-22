@@ -20,6 +20,8 @@ cp .env.example .env            # add at least one LLM key (GROQ_API_KEY or GEMI
 python -m repolens owner/name --md report.md      # or a GitHub URL, or a local git folder
 python -m repolens owner/name --no-llm            # deterministic analysis only, no keys needed
 python -m repolens.find "build a RAG chatbot" --language python   # find repos worth studying for a goal (no cloning)
+python -m repolens.find "build a RAG chatbot" --deep 3 --dry-run   # show which repos a deep analysis would clone, and how big (downloads nothing)
+python -m repolens.find "build a RAG chatbot" --deep 3             # clone and analyze the top 3 in depth; full reports go to reports/find/
 python -m pytest -q
 ```
 
@@ -52,9 +54,9 @@ Results are cached per repo and commit, versioned by analyzer version, so an unc
 
 V1 is code-complete: all 10 review repos are analyzed, narrated and explained, with 0 crashes and about 5 s per cached repo. **The human review (Gate A) was waived by the owner**, so the project is *machine-verified, human-unverified*: scores are first guesses, and nobody but the author has judged whether the reports are useful. See [docs/DECISIONS.md](docs/DECISIONS.md) (D18) and [docs/STATUS.md](docs/STATUS.md).
 
-V3 has started: `python -m repolens.find "<goal>"` ranks repositories for a goal from GitHub search data (relevance, freshness, popularity, size, a model's reading of each description), flags curated lists, and suggests an easiest-first order. It does not clone anything, so completeness and code quality are not assessed at that stage; analyzing finalists in depth is a separate, opt-in step.
+V3 has started: `python -m repolens.find "<goal>"` ranks repositories for a goal from GitHub search data (relevance, freshness, popularity, size, a model's reading of each description), flags curated lists, and suggests an easiest-first order. By default it clones nothing, so completeness and code quality are not assessed; `--deep N` (or `--deep-repos a/b,c/d`) then clones those finalists (partial clones, read-only, never run) and folds their health, tests, CI, completeness and a one-sentence summary into the ranking. `--dry-run` shows what would be cloned first.
 
-Not built yet: deep analysis of finalists inside the finder, a web app (V4), running repos in a sandbox (V5), community features (V6).
+Not built yet: a web app (V4), running repos in a sandbox (V5), community features (V6).
 
 ## Docs
 
