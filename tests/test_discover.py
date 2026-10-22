@@ -226,3 +226,60 @@ def test_a_model_endorsement_cancels_the_off_topic_penalty_but_a_weak_one_does_n
     assert d.score({**plain, "llm_relevance": 1}, terms, TODAY)["parts"]["off-topic penalty"] == -0.15
     s = d.score({**plain, "llm_relevance": 3}, terms, TODAY)["parts"]
     assert s["model relevance"] == 0.30 and s["relevance"] == 0.0                         # model carries the relevance weight
+
+
+class LimitedExt(FakeExt):
+    """Search that is rate limited (empty list + status 403) for the first `limited_calls` calls."""
+
+    def __init__(self, results, limited_calls):
+        super().__init__(results)
+        self.limited_calls, self.calls_made, self.last_status = limited_calls, 0, None
+
+    def search_repos(self, query, sort="stars", per_page=10):
+        self.calls_made += 1
+        if self.calls_made <= self.limited_calls:
+            self.last_status = 403
+            return []
+        self.last_status = None
+        return super().search_repos(query, sort, per_page)
+
+
+def test_searches_are_spaced_and_a_rate_limit_is_retried_once_after_a_pause():
+    sleeps = []
+    ext = LimitedExt({"rag": [cand("a/one")]}, limited_calls=1)
+    got = d.gather(ext, ["rag"], TODAY, pause=2.2, retry_wait=30, sleep=sleeps.append)
+    assert [c["full_name"] for c in got] == ["a/one"] and sleeps == [30] and ext.calls_made == 2
+    sleeps.clear()
+    ext2 = LimitedExt({"x": [cand("a/one")], "y": [cand("b/two")]}, limited_calls=0)
+    d.gather(ext2, ["x", "y"], TODAY, pause=2.2, sleep=sleeps.append)
+    assert sleeps == [2.2]                                                                  # spaced between searches, not before the first
+
+
+def test_persistent_rate_limiting_is_an_error_not_an_empty_answer():
+    ext = LimitedExt({}, limited_calls=99)
+    with pytest.raises(d.SearchLimited):
+        d.gather(ext, ["rag", "vector"], TODAY, sleep=lambda s: None)
+    assert ext.calls_made == 2                                                              # one try, one retry, then it stops
+
+
+def test_partial_results_survive_a_later_rate_limit():
+    class Ext(FakeExt):
+        last_status = None
+        n = 0
+
+        def search_repos(self, query, sort="stars", per_page=10):
+            self.n += 1
+            if self.n == 1:
+                self.last_status = None
+                return [cand("a/one")]
+            self.last_status = 429
+            return []
+    got = d.gather(Ext(), ["first", "second", "third"], TODAY, sleep=lambda s: None)
+    assert [c["full_name"] for c in got] == ["a/one"]                                       # what was found is kept
+    assert d.gather(FakeExt({"rag": [cand("a/one")]}), ["rag"], TODAY)[0]["matched_queries"] == ["rag"]   # a fake without last_status still works
+
+
+def test_cli_reports_rate_limiting_with_its_own_exit_code(monkeypatch, capsys):
+    from repolens import find
+    monkeypatch.setattr(find, "gather", lambda *a, **k: (_ for _ in ()).throw(d.SearchLimited("GitHub search is rate limited right now")))
+    assert find.main(["rag chatbot", "--no-llm"]) == 3 and "rate limited" in capsys.readouterr().err

@@ -10,6 +10,7 @@ is complete or well written; that needs the deep analysis (Stage B) which clones
 from __future__ import annotations
 
 import math
+import time
 import re
 from datetime import date, timedelta
 
@@ -83,14 +84,37 @@ def build_search_query(q: str, language: str | None, today: date, max_age_days: 
     return " ".join(parts)
 
 
-def gather(ext, queries: list[str], today: date | None = None, language: str | None = None, per_query: int = 15) -> list[dict]:
-    """Search each query and merge by repository, remembering which queries found it."""
+class SearchLimited(RuntimeError):
+    """GitHub search is rate limited (30 searches a minute with a token) and nothing could be fetched."""
+
+
+def gather(ext, queries: list[str], today: date | None = None, language: str | None = None, per_query: int = 15,
+           pause: float = 0.0, retry_wait: float = 30.0, sleep=time.sleep) -> list[dict]:
+    """Search each query and merge by repository, remembering which queries found it.
+
+    `pause` spaces the searches (2.2 s keeps a token under 30 a minute). If a search comes back empty because GitHub
+    rate limited us (HTTP 403 or 429), wait `retry_wait` seconds and try once more; if that fails too, stop. Partial
+    results are returned; with nothing at all, SearchLimited is raised so "rate limited" is never reported as
+    "no matches"."""
     today = today or date.today()
     found: dict[str, dict] = {}
-    for q in queries:
-        for r in ext.search_repos(build_search_query(q, language, today), per_page=per_query):
+    limited = False
+    for i, q in enumerate(queries):
+        if i and pause:
+            sleep(pause)
+        query = build_search_query(q, language, today)
+        results = ext.search_repos(query, per_page=per_query)
+        if not results and getattr(ext, "last_status", None) in (403, 429):
+            sleep(retry_wait)
+            results = ext.search_repos(query, per_page=per_query)
+            if not results and getattr(ext, "last_status", None) in (403, 429):
+                limited = True
+                break
+        for r in results:
             c = found.setdefault(r["full_name"], {**r, "matched_queries": []})
             c["matched_queries"].append(q)
+    if limited and not found:
+        raise SearchLimited("GitHub search is rate limited right now; wait a minute and try again")
     return list(found.values())
 
 

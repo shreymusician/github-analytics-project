@@ -10,7 +10,7 @@ import os
 import sys
 from datetime import date
 
-from .discover import gather, queries_for_goal, rank, render_guide
+from .discover import SearchLimited, gather, queries_for_goal, rank, render_guide
 from .external import External
 from .llm.router import LLMRouter, keys_from_env
 
@@ -36,7 +36,11 @@ def main(argv: list[str] | None = None) -> int:
     if not queries:
         print("error: could not turn that goal into search words", file=sys.stderr)
         return 2
-    candidates = gather(ext, queries, today=date.today(), language=a.language)
+    try:
+        candidates = gather(ext, queries, today=date.today(), language=a.language, pause=2.2)
+    except SearchLimited as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 3
     if not candidates and not os.environ.get("GITHUB_TOKEN"):
         print("note: no results; GitHub search is limited without GITHUB_TOKEN (see .env.example)", file=sys.stderr)
     guide = render_guide(a.goal, rank(candidates, a.goal, ext=ext, top=max(1, a.top), router=router), how, queries, a.language)
