@@ -145,7 +145,10 @@ def test_manifest_dependencies_and_search_shapes():
                         "archived": False, "topics": ["x"], "description": None}, {"junk": 1}]}
     res = ext_with(lambda r: httpx.Response(200, json=items)).search_repos("topic:rag")
     assert res == [{"full_name": "a/b", "stars": 9, "pushed_at": "2026-02-02", "archived": False,
-                    "topics": ["x"], "description": None}]
+                    "topics": ["x"], "description": None, "size_kb": None, "language": None}]
+    items["items"][0].update({"size": 1234, "language": "Python"})
+    assert ext_with(lambda r: httpx.Response(200, json=items)).search_repos("q")[0]["size_kb"] == 1234
+    assert ext_with(lambda r: httpx.Response(200, json=items)).search_repos("q")[0]["language"] == "Python"
 
 
 # ---------- pipeline: external data attached only for GitHub sources, cached with the SHA

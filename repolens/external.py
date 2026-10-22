@@ -88,7 +88,8 @@ class External:
         if not isinstance(d, dict):
             return []
         return [{"full_name": i["full_name"], "stars": i["stargazers_count"], "pushed_at": i["pushed_at"][:10],
-                 "archived": i["archived"], "topics": i.get("topics", [])[:8], "description": i.get("description")}
+                 "archived": i["archived"], "topics": i.get("topics", [])[:8], "description": i.get("description"),
+                 "size_kb": i.get("size"), "language": i.get("language")}
                 for i in d.get("items", []) if isinstance(i, dict) and "full_name" in i]
 
     def manifest_dependencies(self, owner: str, name: str) -> set[str] | None:
