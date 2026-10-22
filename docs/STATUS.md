@@ -2,7 +2,7 @@
 
 Last updated: 2026-10-21 (V1: code complete; Gate A machine-verified, human review waived by owner, see DECISIONS D18)
 
-## Built and tested (139 tests passing)
+## Built and tested (160 tests passing)
 
 | Component | File | Notes |
 |---|---|---|
@@ -22,6 +22,7 @@ Last updated: 2026-10-21 (V1: code complete; Gate A machine-verified, human revi
 | Third-party import detection | `repolens/graph.py` | Works without any manifest; alias map (PIL -> Pillow); import-derived capability tags |
 | External signals (fail-soft) | `repolens/external.py` | GitHub facts (+ ecosyste.ms fallback), OpenSSF Scorecard, repo search and manifest deps (V3 helpers). Live-tested; `--offline` skips |
 | Citation grounding | `repolens/narrate.py` | Names/files/numbers must exist in the packet; wrong citations repaired, unsupported statements dropped with reasons (D13) |
+| Repo discovery (V3 stage A) | `repolens/discover.py`, `repolens/find.py` | Goal -> queries -> GitHub search -> dependency check -> model relevance -> explained ranking + reading order; collections flagged; no cloning (D25) |
 | Answerability test | `repolens/answerability.py`, `scripts/answerability.py` | Readers answer 9 checkable questions from the README / our report / both, graded by code against GitHub data (D24) |
 | CI detection | `repolens/ci.py` | One shared list of 20 CI systems used by analyzer and fact-check (D23) |
 | Notebook reader | `repolens/notebooks.py` | Outline, imports, reading view (sources only, never outputs, never executed); imports merged into the third-party counter; notebook-first repos get notebooks explained (D21) |
@@ -75,6 +76,9 @@ Still unverified: whether a human finds the reports insightful and accurate. Tha
 - After adding the census, import evidence and grounding, two real Groq runs on `mini_proj` dropped 0 statements and traced library claims to the import evidence. The report now opens with "dominated by presentation slides (85%)" instead of "a single-file animation script".
 - The first grounding version dropped a true statement because the model cited the wrong ID; fixed by repairing citations (D13).
 - Not yet run: the GitHub clone path, the external signals inside a full `run()` on a real GitHub repo, and Gemini narration after the grounding change (Gemini was tested before it).
+
+## V3 discovery: first live result (2026-10-22)
+For "I want to build a RAG chatbot over my documents" (python), the finder returned pathwaycom/serviette, bhaskatripathi/pdfGPT, llmware, Qwen-Agent, headroom and weaviate/Verba (archived), with the model's one-line reason for each. The first version put two curated lists at the top; collection detection plus a model reading of descriptions fixed that. **Checked by one goal and the author's eye only**: the ranking is plausible, not validated. Next: try more goals, calibrate weights on real feedback, add the opt-in deep analysis of finalists.
 
 ## Verification of the latest set (analyzer version 17, three providers)
 - **Independent audit, finally:** with an OpenRouter key added (default model cohere/north-mini-code:free, the only one of nine free models that passed our narration test), all 20 audits (narration and "how it works" for 10 repos) were judged by a different provider than the narrator. 216 claims: 206 supported, 10 partly, 0 unsupported, 0 contradicted. The 10 "partly" are real overreach, for example picoGPT: the report said gpt2_pico.py is "intended for readability" while the evidence says it is the compact, less readable version.

@@ -171,3 +171,5 @@ V0 Foundation ──> V1 Single-Repo Brain ──> V2 Trust ──> V3 Find ─�
 2. **Local tool or hosted service?** Moves BYOK handling, sandbox safety and costs.
 3. **Backend stack:** Python assumed; the frontend form (page, extension, chat) is undecided.
 4. **Deadline and team size.** Needed to put dates on this.
+
+> Progress note (2026-10-22): V3 items 3.1 to 3.3 and 3.5 have a first version in `repolens/discover.py` (see DECISIONS D25): candidate search with cheap stack verification, goal understanding by a model with a keyword fallback, and a ranking with a suggested order. Not done: the fingerprint store (3.4), deep analysis of finalists inside the finder, an agent loop that reads READMEs, and any calibration against real users.
