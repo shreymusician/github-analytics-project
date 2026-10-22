@@ -222,3 +222,20 @@ def test_everyday_library_names_match_their_import_names():
     assert ungrounded("Uses OpenCV and Pillow.", ev, {"opencv", "pillow"}) == []
     assert ungrounded("Built with PyTorch.", "numpy only", {"pytorch"}) == ["PyTorch"]       # still caught when truly absent
     assert ungrounded("Uses TensorFlow.", ev, set()) == ["TensorFlow"]
+
+
+def test_last_status_tells_rate_limiting_apart_from_no_results():
+    empty = ext_with(lambda r: httpx.Response(200, json={"items": []}))
+    assert empty.search_repos("q") == [] and empty.last_status is None                       # genuinely nothing found
+    limited = ext_with(lambda r: httpx.Response(403, json={"message": "rate limit exceeded"}))
+    assert limited.search_repos("q") == [] and limited.last_status == 403                    # same empty list, different cause
+    assert ext_with(lambda r: httpx.Response(429)).search_repos("q") == []
+    def boom(req):
+        raise httpx.ConnectError("down")
+    down = ext_with(boom)
+    assert down.search_repos("q") == [] and down.last_status == "network"
+    both = ext_with(lambda r: httpx.Response(404) if "git/trees" in str(r.url) else httpx.Response(200, json={"items": []}))
+    both.tree_paths("o", "r")
+    assert both.last_status == 404
+    both.search_repos("q")
+    assert both.last_status is None                                                          # reflects the most recent request

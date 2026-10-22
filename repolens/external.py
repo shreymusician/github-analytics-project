@@ -21,6 +21,9 @@ class External:
         self.token = github_token
         self.client = client or httpx.Client(timeout=timeout, follow_redirects=True,
                                              headers={"User-Agent": "repolens/0.1"})
+        # Why the most recent request returned nothing: an HTTP status, "network", or None if it succeeded. Lets a
+        # caller tell "rate limited" (403/429) from "no results", which both come back as an empty list.
+        self.last_status: int | str | None = None
 
     def _get(self, url: str, *, github: bool = False, params: dict | None = None):
         headers = {"Accept": "application/vnd.github+json"} if github else {}
@@ -29,7 +32,9 @@ class External:
         try:
             r = self.client.get(url, params=params, headers=headers)
         except httpx.HTTPError:
+            self.last_status = "network"
             return None
+        self.last_status = None if r.status_code == 200 else r.status_code
         if r.status_code != 200:
             return None
         try:
