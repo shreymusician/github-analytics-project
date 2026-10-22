@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from .architecture import evidence_lines as arch_evidence_lines
 from .evidence import build_packet
+from .signals import _is_test as is_test_path
 
 
 def _bar(score: int) -> str:
@@ -14,11 +15,46 @@ def _cite(item: dict) -> str:
     return " " + "".join(f"[{e}]" for e in item["evidence"])
 
 
+_CODE_SUFFIXES = (".py", ".js", ".jsx", ".ts", ".tsx", ".go", ".rs", ".java", ".c", ".cpp", ".cs", ".rb", ".php", ".kt", ".swift")
+
+
+def _note(p: dict, area: str, startswith: str) -> str | None:
+    return next((e["note"] for e in p[area]["evidence"] if e["ok"] is True and e["note"].startswith(startswith)), None)
+
+
+def at_a_glance(p: dict) -> list[str]:
+    """The facts a learner checks first, in one place. Everything here is deterministic (no model involved)."""
+    st, hi, ext = p["stack"], p["history"], p.get("external", {}).get("github", {})
+    langs = [k for k, v in st["languages"].items() if v >= 0.05]
+    ci = _note(p, "deployability", "CI pipeline configured")
+    tests = p["metrics"]["test_files"]
+    libs = [d for d in st.get("dependencies", [])][:6] or [i["module"] for i in p["architecture"].get("third_party_imports", [])][:6]
+    dirs = sorted({f.split("/")[0] for f in st.get("path_index", [])
+                   if "/" in f and f.lower().endswith(_CODE_SUFFIXES) and not is_test_path(f)})[:6]
+    lines = ["## At a glance", "",
+             f"- **Language:** {', '.join(langs) if langs else (st['primary_language'] or 'unknown')}"]
+    if hi.get("commits"):
+        lines.append(f"- **Maintenance:** {hi['status']} (last commit {hi['last_commit']}, {hi['idle_days']} days ago; "
+                     f"{hi['commits']} commits, {hi['contributors']} contributor(s))")
+    lines += [f"- **Tests:** {'yes (' + str(tests) + ' test files)' if tests else 'no'}",
+              f"- **CI:** {ci.removeprefix('CI pipeline configured ').strip('()') if ci else 'none found'}",
+              f"- **Docker:** {'yes' if _note(p, 'deployability', 'Dockerfile present') else 'no'}",
+              f"- **License:** {'yes' + (' (' + ext['license'] + ')' if ext.get('license') else '') if _note(p, 'completeness', 'license present') else 'no'}"]
+    if ext:
+        lines.append(f"- **GitHub:** {ext.get('stars')} stars, archived: {'yes' if ext.get('archived') else 'no'}")
+    if libs:
+        lines.append(f"- **Main libraries:** {', '.join(libs)}")
+    if dirs:
+        lines.append(f"- **Source folders:** {', '.join(dirs)}")
+    return lines + [""]
+
+
 def render(result: dict) -> str:
     p, nar = result["profile"], result["narrative"]
     n = nar["narrative"] if nar else None
     st, ar, hi = p["stack"], p["architecture"], p["history"]
     L: list[str] = [f"# Repo report: {p['repo']}", "", f"Commit `{(p['sha'] or 'unknown')[:10]}`", ""]
+    L += at_a_glance(p)
 
     if n and n.get("summary"):
         L += ["## What it is", n["summary"]["text"] + _cite(n["summary"]), ""]
