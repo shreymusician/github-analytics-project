@@ -9,6 +9,8 @@ from __future__ import annotations
 import re
 from datetime import date
 
+from . import ci
+
 _MANIFEST_NAMES = {"pyproject.toml", "setup.py", "setup.cfg", "pipfile", "environment.yml", "environment.yaml",
                    "package.json", "go.mod", "cargo.toml"}
 _CODE_EXT = (".py", ".js", ".jsx", ".ts", ".tsx", ".go", ".rs", ".java", ".ipynb")
@@ -24,7 +26,7 @@ def truth_has_dockerfile(paths):
 
 
 def truth_has_ci(paths):
-    return any(p.lower().startswith(".github/workflows/") or _base(p) in {".gitlab-ci.yml", "jenkinsfile"} for p in paths)
+    return bool(ci.detect(paths))
 
 
 def truth_has_license(paths, spdx):

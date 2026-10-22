@@ -13,6 +13,7 @@ import ast
 import re
 from pathlib import Path
 
+from . import ci
 from .files import read_text
 
 _TODO = re.compile(r"\b(TODO|FIXME|XXX|HACK)\b")
@@ -126,8 +127,8 @@ def assess(root: Path, stack: dict, arch: dict, history: dict) -> dict:
     d = _Score()
     dockerfile = _has(paths, lambda p: p.rsplit("/", 1)[-1] in {"dockerfile"} or p.endswith(".dockerfile"))
     d.check(bool(dockerfile), 25, f"Dockerfile present ({dockerfile[:1][0] if dockerfile else ''})", "no Dockerfile")
-    d.check(bool(_has(paths, lambda p: p.startswith(".github/workflows/") or p in {".gitlab-ci.yml", "jenkinsfile"})),
-            15, "CI pipeline configured", "no CI pipeline")
+    found_ci = ci.detect(paths)
+    d.check(bool(found_ci), 15, f"CI pipeline configured ({', '.join(found_ci)})", "no CI pipeline")
     d.check(bool(stack["lockfiles"]) or (stack["pinned_ratio"] or 0) >= 0.7, 15,
             "dependencies pinned or locked", "dependencies not pinned/locked: builds may not reproduce")
     d.check(bool(stack["manifests"]), 15, f"dependency manifest ({stack['manifests'][:1][0] if stack['manifests'] else ''})",
