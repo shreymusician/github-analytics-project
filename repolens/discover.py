@@ -184,7 +184,7 @@ def score(c: dict, terms: list[str], today: date, libs: set[str] | None = None) 
     if is_collection(c):
         parts["collection penalty"] = -0.20                                        # an index of projects, not one to study
     if c.get("archived"):
-        parts["archived penalty"] = -0.10
+        parts["archived penalty"] = -0.05      # archived code is just as readable, so only a small nudge
     return {"total": round(sum(parts.values()), 3), "parts": parts, "matched_terms": hit}
 
 

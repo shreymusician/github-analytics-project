@@ -90,7 +90,7 @@ def test_score_parts_sum_to_total_and_each_signal_moves_the_right_way():
     assert d.score(cand("o/rag-chatbot", desc="A RAG chatbot", stars=60), terms, TODAY)["total"] < base["total"]            # popularity
     assert d.score(cand("o/rag-chatbot", desc="A RAG chatbot", size_kb=900_000), terms, TODAY)["total"] < base["total"]     # learnability
     arch = d.score(cand("o/rag-chatbot", desc="A RAG chatbot", archived=True), terms, TODAY)
-    assert arch["parts"]["archived penalty"] == -0.10 and arch["total"] < base["total"]                           # penalized, not hidden
+    assert arch["parts"]["archived penalty"] == -0.05 and arch["total"] < base["total"]                           # penalized, not hidden
     partial_one = d.score(cand("o/rag-demo", desc="A RAG demo", queries=("a",)), terms, TODAY)                   # matches 1 of 2 words
     partial_many = d.score(cand("o/rag-demo", desc="A RAG demo", queries=("a", "b", "c")), terms, TODAY)
     assert partial_many["total"] > partial_one["total"]                                                           # found by several queries
