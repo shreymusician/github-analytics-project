@@ -129,3 +129,41 @@ def test_if_no_other_provider_ever_answers_the_self_graded_result_is_kept_and_fl
     router = LLMRouter(keys={"groq": "k1", "gemini": "k2"}, client=httpx.Client(transport=httpx.MockTransport(handler)))
     out = audit.audit(pk, nar, router, sleep=lambda s: None)
     assert out["judge"] == "groq" and out["independent"] is False        # honest: still reported, but flagged
+
+
+def test_any_other_provider_can_be_the_independent_judge(repo):
+    """With three providers: Gemini is down, Groq (the narrator) answers, OpenRouter then takes over as the judge."""
+    import httpx
+    from repolens.llm.router import LLMRouter
+    pk, nar = setup(repo)                                    # narrator: groq
+    verdicts = json.dumps({"verdicts": [{"id": c["id"], "verdict": "supported", "reason": "ok"}
+                                        for c in audit.claims_of(nar["narrative"])]})
+    ok = {"choices": [{"message": {"content": verdicts}}]}
+    calls = []
+
+    def handler(req):
+        who = "gemini" if "googleapis" in req.url.host else "openrouter" if "openrouter" in req.url.host else "groq"
+        calls.append(who)
+        return httpx.Response(503) if who == "gemini" else httpx.Response(200, json=ok)
+
+    router = LLMRouter(keys={"groq": "k1", "gemini": "k2", "openrouter": "k3"}, client=httpx.Client(transport=httpx.MockTransport(handler)))
+    out = audit.audit(pk, nar, router, sleep=lambda s: None)
+    assert out["judge"] == "openrouter" and out["independent"] is True
+    assert calls[0] == "gemini" and "groq" in calls and calls[-1] == "openrouter"
+
+
+def test_an_alternative_that_returns_junk_does_not_replace_a_usable_result(repo):
+    import httpx
+    from repolens.llm.router import LLMRouter
+    pk, nar = setup(repo)
+    verdicts = json.dumps({"verdicts": [{"id": c["id"], "verdict": "supported", "reason": "ok"}
+                                        for c in audit.claims_of(nar["narrative"])]})
+
+    def handler(req):
+        if "googleapis" in req.url.host:
+            return httpx.Response(200, json={"choices": [{"message": {"content": "I cannot help with that"}}]})   # not JSON
+        return httpx.Response(200, json={"choices": [{"message": {"content": verdicts}}]})
+
+    router = LLMRouter(keys={"groq": "k1", "gemini": "k2"}, client=httpx.Client(transport=httpx.MockTransport(handler)))
+    out = audit.audit(pk, nar, router, sleep=lambda s: None)
+    assert out is not None and out["judge"] == "groq" and out["independent"] is False      # self-graded but valid, and flagged

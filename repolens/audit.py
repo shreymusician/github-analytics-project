@@ -80,20 +80,41 @@ def audit(packet: dict, narration: dict, router, max_wait: float = 45.0, sleep=N
         text, judge = ask_with_patience(router, messages, max_wait, **kw)
     except AllProvidersFailed:
         pass
-    if (text is None or judge == narrator) and prefer:
-        # The router falls back silently when the preferred judge is rate-limited, which leaves the narrator
-        # grading its own work. Retry once with ONLY the other provider, waiting for its limit if needed.
-        solo = _solo_router(router, prefer)
-        if solo is not None:
+    def usable(t) -> bool:
+        d = _parse(t) if t else None
+        return isinstance(d, dict) and isinstance(d.get("verdicts"), list)
+
+    if not usable(text) or judge == narrator:
+        # The router falls back silently when the preferred judge is rate-limited (leaving the narrator to grade its
+        # own work) and accepts any HTTP 200 even if the body is junk. So: try every OTHER provider on its own
+        # (waiting for a brief rate limit) and keep the first usable answer. If none gives one, a usable earlier
+        # answer stands, flagged as self-graded; as a last resort the narrator's own provider is tried alone.
+        solo_kw = {k: v for k, v in kw.items() if k != "prefer"}
+        others = [p for p in getattr(router, "order", []) if p != narrator]
+        got_independent = False
+        for alt in others:
+            solo = _solo_router(router, alt)
+            if solo is None:
+                continue
             try:
-                text, judge = ask_with_patience(solo, messages, max_wait, **{k: v for k, v in kw.items() if k != "prefer"})
+                text2, judge2 = ask_with_patience(solo, messages, max_wait, **solo_kw)
             except AllProvidersFailed:
-                pass
-    if text is None:
+                continue
+            if usable(text2):
+                text, judge, got_independent = text2, judge2, True
+                break
+        if not got_independent and not usable(text) and narrator in getattr(router, "order", []):
+            solo = _solo_router(router, narrator)
+            if solo is not None:
+                try:
+                    text2, judge2 = ask_with_patience(solo, messages, max_wait, **solo_kw)
+                    if usable(text2):
+                        text, judge = text2, judge2
+                except AllProvidersFailed:
+                    pass
+    if not usable(text):
         return None
     data = _parse(text)
-    if not isinstance(data, dict) or not isinstance(data.get("verdicts"), list):
-        return None
 
     known = {c["id"]: c["text"] for c in claims}
     got: dict[str, dict] = {}
