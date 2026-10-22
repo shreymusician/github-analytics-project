@@ -131,6 +131,12 @@ The pipeline combines: (1) lazy analysis, (2) a live discovery agent, (3) depend
 **Weights (uncalibrated):** relevance 0.45 (keywords alone) or 0.15 keywords + 0.30 model; freshness 0.20; popularity 0.15 (log stars); learnability 0.15 (smaller is easier); stack match up to +0.10; penalties for collections, off-topic and archived. They are first guesses and are shown to the user for that reason.
 **Limits:** it does not know whether a repo is complete or well written; GitHub search only sees names, descriptions and topics; one live goal was checked by eye by the author, not by a user.
 
+## D26. Test discovery on many goals, and let the search find small projects
+**Decision:** discovery is checked automatically on ten different goals (`scripts/discovery_check.py`) with objective red flags (curated lists in the top 3, results sharing none of the goal's words, one owner filling the list, archived repos near the top, wrong language, model judge missing, too few results). Search runs over names, descriptions and topics, not README text, looks back four years, and uses GitHub topics suggested by the model (accepted only as plain slugs). Weak candidates are left out instead of padding the list; a list says so when it is short or weak; at most two repositories per owner.
+**Why:** the first goal looked fine by eye, but "movie recommender system" returned none-on-topic repositories. Searching README text sorted by stars let giants such as public-apis and awesome-python, which mention a word somewhere, fill all 15 candidate slots, so the real projects never became candidates. After the fix the same goal returns moviebox, moviegeek and three other recommenders; the candidate pool for RAG grew from 28 to 77.
+**Also learned:** an empty GitHub search can mean "rate limited" (HTTP 403 or 429), so searches are paced (2.2 s) and retried once, and persistent limiting raises an error (exit code 3) rather than reporting "no matches".
+**Honest limits:** zero red flags means no OBVIOUS problem, not good recommendations. The model's relevance ratings that help rank are not independent evidence. Small hobby projects can outrank famous ones because "learnable" favours small repos; whether they are good is what the deep analysis (clone and analyze finalists) would show, and it is still opt-in. Ten goals, all in AI/ML, checked by flags and the author's glance, never by a user.
+
 ## Open questions
 - Product vs. hackathon/college project? (changes polish and scope)
 - Local tool vs. hosted service? (affects sandbox design and key handling)
