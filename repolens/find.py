@@ -43,7 +43,7 @@ def main(argv: list[str] | None = None) -> int:
         return 3
     if not candidates and not os.environ.get("GITHUB_TOKEN"):
         print("note: no results; GitHub search is limited without GITHUB_TOKEN (see .env.example)", file=sys.stderr)
-    guide = render_guide(a.goal, rank(candidates, a.goal, ext=ext, top=max(1, a.top), router=router), how, queries, a.language)
+    guide = render_guide(a.goal, rank(candidates, a.goal, ext=ext, top=max(1, a.top), router=router), how, queries, a.language, requested_top=a.top)
     if a.md:
         open(a.md, "w", encoding="utf-8").write(guide)
     else:

@@ -106,7 +106,8 @@ def test_rank_uses_declared_dependencies_and_respects_top():
     assert [c["full_name"] for c in ranked] == ["o/uses-libs", "o/plain-rag"]                                    # stack match breaks the tie
     assert ranked[0]["dep_hits"] == ["chromadb"] and ranked[1]["dep_hits"] == []
     assert "stack match" in ranked[0]["parts"] and len(ranked) == 2
-    assert [c["full_name"] for c in d.rank(cands, "rag chatbot", TODAY, ext=None, top=5)][-1] == "o/unrelated"   # works without API checks
+    no_api = [c["full_name"] for c in d.rank(cands, "rag chatbot", TODAY, ext=None, top=5)]                       # works without API checks
+    assert "o/unrelated" not in no_api and len(no_api) == 2                                                       # off-topic is left out, not padded in
 
 
 def test_learning_order_puts_smaller_repos_first():
@@ -188,15 +189,16 @@ class NamedJudge(FakeRouter):
 
 
 def test_the_models_view_reorders_candidates_and_unjudged_ones_get_a_neutral_score():
-    cands = [cand("o/keyword-match", desc="rag chatbot toolkit", stars=900), cand("o/real-example", desc="demo app for documents", stars=900),
-             cand("o/never-judged", desc="rag chatbot", stars=900)]
+    cands = [cand("a/keyword-match", desc="rag chatbot toolkit", stars=900), cand("b/real-example", desc="demo app for documents", stars=900),
+             cand("c/never-judged", desc="rag chatbot", stars=900)]
     before = [c["full_name"] for c in d.rank(cands, "rag chatbot", TODAY)]
-    assert before[0] in ("o/keyword-match", "o/never-judged") and before[-1] == "o/real-example"      # keywords alone favour the matches
-    ranked = d.rank(cands, "rag chatbot", TODAY, router=NamedJudge({"o/keyword-match": (0, "just a toolkit"), "o/real-example": (3, "full example")}))
+    assert before[0] in ("a/keyword-match", "c/never-judged") and "b/real-example" not in before      # keywords alone cannot see it at all
+    ranked = d.rank(cands, "rag chatbot", TODAY, router=NamedJudge({"a/keyword-match": (0, "just a toolkit"), "b/real-example": (3, "full example")}))
     by = {c["full_name"]: c for c in ranked}
-    assert by["o/real-example"]["llm_relevance"] == 3 and by["o/never-judged"]["llm_relevance"] == 1
-    assert by["o/never-judged"]["llm_why"] == "not judged by the model" and "model relevance" in by["o/real-example"]["parts"]
-    assert ranked[0]["full_name"] == "o/real-example" and ranked[-1]["full_name"] == "o/keyword-match"   # the model's view reorders
+    assert by["b/real-example"]["llm_relevance"] == 3 and by["c/never-judged"]["llm_relevance"] == 1
+    assert by["c/never-judged"]["llm_why"] == "not judged by the model" and "model relevance" in by["b/real-example"]["parts"]
+    assert ranked[0]["full_name"] == "b/real-example"                                    # the model's view reorders...
+    assert "a/keyword-match" not in by                                                   # ...and its 0 ("unrelated") removes a keyword match
 
 
 def test_a_useless_model_answer_falls_back_to_keyword_scoring():
@@ -209,11 +211,11 @@ def test_a_useless_model_answer_falls_back_to_keyword_scoring():
 
 
 def test_collections_go_last_in_the_reading_order_and_are_labelled_in_the_guide():
-    cands = [cand("o/awesome-rag", desc="curated rag chatbot list", size_kb=500, stars=9000),
-             cand("o/rag-chatbot", desc="A rag chatbot", size_kb=2000), cand("o/big-rag-chatbot", desc="rag chatbot", size_kb=300_000)]
+    cands = [cand("a/awesome-rag", desc="curated rag chatbot list", size_kb=500, stars=9000),
+             cand("b/rag-chatbot", desc="A rag chatbot", size_kb=2000), cand("c/big-rag-chatbot", desc="rag chatbot", size_kb=300_000)]
     ranked = d.rank(cands, "rag chatbot", TODAY)
     order = [c["full_name"] for c in d.learning_order(ranked)]
-    assert order == ["o/rag-chatbot", "o/big-rag-chatbot", "o/awesome-rag"]
+    assert order == ["b/rag-chatbot", "c/big-rag-chatbot", "a/awesome-rag"]
     md = d.render_guide("rag chatbot", ranked, "keywords", ["rag chatbot"])
     assert "collection of other projects" in md and md.count("collection of other projects") == 1
 
@@ -302,3 +304,35 @@ def test_model_topics_become_topic_searches_next_to_the_keyword_queries():
     assert how2 == "model" and "topic:recommender-system" in only_topics            # topics alone are enough to count as a model answer
     capped = d.queries_for_goal("x y", FakeRouter(json.dumps({"topics": [f"topic-{i}" for i in range(9)]})))[0]
     assert len([q for q in capped if q.startswith("topic:")]) == d.MAX_TOPICS
+
+
+def test_off_topic_and_model_rejected_candidates_are_dropped_not_used_as_padding():
+    cands = [cand(f"o{i}/rag-chatbot-{i}", desc="a rag chatbot") for i in range(2)] +             [cand("x/giant", desc="a huge unrelated tool", stars=400_000), cand("y/listing", desc="rag chatbot stuff", stars=300)]
+    ranked = d.rank(cands, "rag chatbot", TODAY, top=6)
+    assert {c["full_name"] for c in ranked} == {"o0/rag-chatbot-0", "o1/rag-chatbot-1", "y/listing"}      # the giant is not shown
+    assert not any(c["weak"] for c in ranked)
+    rated = d.rank(cands, "rag chatbot", TODAY, router=NamedJudge({"y/listing": (0, "unrelated"), "o0/rag-chatbot-0": (3, "direct")}), top=6)
+    assert "y/listing" not in {c["full_name"] for c in rated}                                           # a model 0 removes it
+
+
+def test_when_nothing_is_relevant_the_best_are_shown_but_flagged_weak():
+    cands = [cand("a/crawler", desc="web crawler", stars=900), cand("b/editor", desc="text editor", stars=700)]
+    ranked = d.rank(cands, "rag chatbot", TODAY, top=5)
+    assert [c["full_name"] for c in ranked] == ["a/crawler", "b/editor"] and all(c["weak"] for c in ranked)
+    md = d.render_guide("rag chatbot", ranked, "keywords", ["rag chatbot"], requested_top=5)
+    assert "weak matches" in md and "none of these clearly match" in md.lower()
+
+
+def test_one_owner_cannot_fill_the_list():
+    cands = [cand(f"ultralytics/yolo{i}", desc="yolo detection", stars=60_000 - i) for i in range(4)] +             [cand("other/yolo-tiny", desc="yolo detection from scratch", stars=500), cand("third/yolo-demo", desc="yolo detection demo", stars=300)]
+    ranked = d.rank(cands, "yolo detection", TODAY, top=6)
+    owners = [c["full_name"].split("/")[0] for c in ranked]
+    assert owners.count("ultralytics") == d.OWNER_CAP and {"other", "third"} <= set(owners)
+
+
+def test_the_guide_says_when_fewer_results_than_requested_were_found():
+    ranked = d.rank([cand("a/rag-chatbot", desc="rag chatbot")], "rag chatbot", TODAY, top=6)
+    md = d.render_guide("rag chatbot", ranked, "keywords", ["rag chatbot"], requested_top=6)
+    assert "Only 1 clearly relevant" in md and "asked for 6" in md and "weak matches" not in md
+    full = d.render_guide("rag chatbot", ranked, "keywords", ["rag chatbot"], requested_top=1)
+    assert "Only" not in full

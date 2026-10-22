@@ -10,8 +10,9 @@ is complete or well written; that needs the deep analysis (Stage B) which clones
 from __future__ import annotations
 
 import math
-import time
 import re
+import time
+from collections import Counter
 from datetime import date, timedelta
 
 from . import stack
@@ -25,6 +26,7 @@ STOPWORDS = {
     "by", "or", "be", "can", "do", "like", "about", "into", "over", "via", "based",
 }
 MAX_QUERIES = 4
+OWNER_CAP = 2          # at most this many repositories from one owner in the shown list
 MIN_STARS = 50
 
 QUERY_SYSTEM = """You turn a learner's goal into GitHub repository search queries.
@@ -258,7 +260,19 @@ def rank(candidates: list[dict], goal: str, today: date | None = None, ext=None,
         out.append({**c, "score": s["total"], "parts": s["parts"], "matched_terms": s["matched_terms"],
                     "collection": is_collection(c)})
     out.sort(key=lambda c: (-c["score"], -c["stars"], c["full_name"]))
-    return out[:top]
+    # Show fewer, honest results instead of padding the list with popular but off-topic repositories: a candidate is
+    # weak if none of the goal's words appear and no model vouched for it, or if the model rated it 0 (unrelated).
+    for c in out:
+        c["weak"] = "off-topic penalty" in c["parts"] or c.get("llm_relevance") == 0
+    strong = [c for c in out if not c["weak"]]
+    pool = strong or out                        # nothing relevant at all: show the best of a bad lot, flagged "weak"
+    picked, per_owner = [], Counter()
+    for c in pool:                              # no single owner may fill the list (three ultralytics repos for YOLO)
+        owner = c["full_name"].split("/")[0]
+        if per_owner[owner] < OWNER_CAP:
+            picked.append(c)
+            per_owner[owner] += 1
+    return picked[:top]
 
 
 def learning_order(ranked: list[dict]) -> list[dict]:
@@ -267,13 +281,20 @@ def learning_order(ranked: list[dict]) -> list[dict]:
     return sorted(ranked, key=lambda c: (bool(c.get("collection")), -_learnability(c.get("size_kb")), -c["score"], c["full_name"]))
 
 
-def render_guide(goal: str, ranked: list[dict], how: str, queries: list[str], language: str | None = None) -> str:
+def render_guide(goal: str, ranked: list[dict], how: str, queries: list[str], language: str | None = None,
+                 requested_top: int | None = None) -> str:
     L = [f"# Repos to study for: {goal}", "",
          f"_Search queries ({how}): {', '.join(f'`{q}`' for q in queries)}" + (f"; language: {language}" if language else "") + "._",
          "_Stage A: ranked from GitHub search data only (relevance, freshness, popularity, size). Nothing was cloned, so "
          "completeness and code quality are NOT assessed. Scores are uncalibrated first guesses._", ""]
     if not ranked:
         return "\n".join(L + ["No repositories found. Try different words, or drop the language filter."]) + "\n"
+    if any(c.get("weak") for c in ranked):
+        L += ["> **These are weak matches.** None of these clearly match the goal; they are the best of what the search found. "
+              "Try different words or drop the language filter.", ""]
+    elif requested_top and len(ranked) < requested_top:
+        L += [f"> Only {len(ranked)} clearly relevant repositories were found (asked for {requested_top}); less relevant ones were left out "
+              "instead of padding the list.", ""]
     L += ["## Ranked", ""]
     for i, c in enumerate(ranked, 1):
         size = f"{c['size_kb'] / 1024:.0f} MB" if isinstance(c.get("size_kb"), (int, float)) else "size unknown"
