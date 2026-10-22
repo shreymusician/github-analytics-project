@@ -114,6 +114,17 @@ The pipeline combines: (1) lazy analysis, (2) a live discovery agent, (3) depend
 **Why:** unquoted IDs destroyed the narration for two repos on every attempt, and a retry that asks for "valid JSON" just repeats the mistake. Repairing a known pattern is cheaper and safer than re-asking.
 **Guardrail:** the repair touches only the contents of `"evidence"` arrays and only tokens shaped like E12 or S3.
 
+## D23. Independent checks must not share assumptions
+**Decision:** a check only counts as independent if it cannot be wrong in the same way as the thing it checks. The CI detector is now ONE shared list (`repolens/ci.py`) used by the analyzer and the fact-check, and new checks should be designed to disagree with us when we are wrong.
+**Why:** the fact-check agreed with the analyzer on 10 of 10 facts and both were wrong about CI: snips-nlu and image-super-resolution use Travis and AppVeyor, but both our code and the "independent" checker only knew GitHub Actions and GitLab. The answerability test found it because a README reader answered correctly and our answer key did not. Agreement between two checkers with the same blind spot is not evidence.
+**Practice:** prefer checks with a different information source (a reader who sees only the README; GitHub's own data; a different model) over a second implementation of the same rule.
+
+## D24. The answerability test: a usefulness proxy graded by code
+**Decision:** `repolens/answerability.py` asks a model nine factual questions about a repo using ONLY one document (README, our report, or both) and grades the answers with plain code against GitHub's data. "Unknown" is counted separately from "wrong". No AI judge, so no self-grading.
+**First results (10 repos):** README only 37% correct, 60% "the document does not say", 2% wrong; our report 98.8% correct, 0% unknown, 1% wrong. Running it exposed the CI bug (D23) and led to the "At a glance" block.
+**Honest limits:** the questions are ones our report is designed to answer (maintenance, tests, CI, Docker, license, archived), and READMEs rarely cover them, so this shows the health layer works, not that the report is better overall. The "dependencies" question is graded against DECLARED dependencies only, so plausible answers can be marked wrong (roboflow/sports). It checks that facts are findable, not that the report is insightful.
+**Use:** re-run after every change as a regression check (`scripts/answerability.py`).
+
 ## Open questions
 - Product vs. hackathon/college project? (changes polish and scope)
 - Local tool vs. hosted service? (affects sandbox design and key handling)
