@@ -137,6 +137,12 @@ The pipeline combines: (1) lazy analysis, (2) a live discovery agent, (3) depend
 **Also learned:** an empty GitHub search can mean "rate limited" (HTTP 403 or 429), so searches are paced (2.2 s) and retried once, and persistent limiting raises an error (exit code 3) rather than reporting "no matches".
 **Honest limits:** zero red flags means no OBVIOUS problem, not good recommendations. The model's relevance ratings that help rank are not independent evidence. Small hobby projects can outrank famous ones because "learnable" favours small repos; whether they are good is what the deep analysis (clone and analyze finalists) would show, and it is still opt-in. Ten goals, all in AI/ML, checked by flags and the author's glance, never by a user.
 
+## D27. Deep analysis of finalists is explicit, previewable, and fail-soft
+**Decision:** `--deep N` / `--deep-repos` clones the chosen finalists (partial clones, read-only, never run), analyzes them with the full pipeline, saves each full report under `reports/find/`, and folds the facts into the ranking: completeness x0.15, deployability x0.05, abandoned -0.10. Repositories not analyzed (or whose analysis failed) get neutral 50s, so a failure never counts as "bad" and totals stay comparable. `--dry-run` lists what would be cloned with sizes and prints the exact `--deep-repos` command that reproduces the selection.
+**Why a reproducible command:** the first real run cloned a different set than the dry run had named, because model-written queries and GitHub results vary between runs. Preview and execution must refer to the same repositories, so the preview now ends with a command that pins them.
+**First real result (RAG chatbot goal, 4 repos):** kotaemon (28 test files, CI, Docker, completeness 90, deployability 100) ahead of gemini_multipdf_chat (no tests or CI, 60/70), Langchain-Chatchat (86/75) and Ask-Mirage-2.0 (no tests, CI, Docker or license; 55/25). The deep facts separated projects the cheap ranking had scored similarly.
+**Known weaknesses seen:** Langchain-Chatchat's start-reading list begins with a text-to-image tool, a poor pick for a RAG app (the import graph rewards hubs); its one-line summary was missing (a narration rate-limit); "stale" is used from 90 days without activity, harsh for projects that commit every few months; scores can exceed 1.0 because they are sums of parts.
+
 ## Open questions
 - Product vs. hackathon/college project? (changes polish and scope)
 - Local tool vs. hosted service? (affects sandbox design and key handling)

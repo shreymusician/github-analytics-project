@@ -2,7 +2,7 @@
 
 Last updated: 2026-10-21 (V1: code complete; Gate A machine-verified, human review waived by owner, see DECISIONS D18)
 
-## Built and tested (171 tests passing)
+## Built and tested (179 tests passing)
 
 | Component | File | Notes |
 |---|---|---|
@@ -22,6 +22,7 @@ Last updated: 2026-10-21 (V1: code complete; Gate A machine-verified, human revi
 | Third-party import detection | `repolens/graph.py` | Works without any manifest; alias map (PIL -> Pillow); import-derived capability tags |
 | External signals (fail-soft) | `repolens/external.py` | GitHub facts (+ ecosyste.ms fallback), OpenSSF Scorecard, repo search and manifest deps (V3 helpers). Live-tested; `--offline` skips |
 | Citation grounding | `repolens/narrate.py` | Names/files/numbers must exist in the packet; wrong citations repaired, unsupported statements dropped with reasons (D13) |
+| Deep analysis of finalists (V3 stage B) | `repolens/discover.py` (`deep_*`, `apply_deep`), `repolens/find.py` | `--deep N`, `--deep-repos`, `--dry-run` (prints a command that pins the selection); read-only partial clones; failures isolated and shown (D27) |
 | Repo discovery (V3 stage A) | `repolens/discover.py`, `repolens/find.py` | Goal -> queries -> GitHub search -> dependency check -> model relevance -> explained ranking + reading order; collections flagged; no cloning (D25) |
 | Answerability test | `repolens/answerability.py`, `scripts/answerability.py` | Readers answer 9 checkable questions from the README / our report / both, graded by code against GitHub data (D24) |
 | CI detection | `repolens/ci.py` | One shared list of 20 CI systems used by analyzer and fact-check (D23) |
@@ -76,6 +77,9 @@ Still unverified: whether a human finds the reports insightful and accurate. Tha
 - After adding the census, import evidence and grounding, two real Groq runs on `mini_proj` dropped 0 statements and traced library claims to the import evidence. The report now opens with "dominated by presentation slides (85%)" instead of "a single-file animation script".
 - The first grounding version dropped a true statement because the model cited the wrong ID; fixed by repairing citations (D13).
 - Not yet run: the GitHub clone path, the external signals inside a full `run()` on a real GitHub repo, and Gemini narration after the grounding change (Gemini was tested before it).
+
+## V3 deep analysis: first real run (2026-10-22)
+Four RAG-chatbot finalists were cloned and analyzed in depth (kotaemon, gemini_multipdf_chat, Langchain-Chatchat, Ask-Mirage-2.0; reports in `reports/find/`, git-ignored). The deep facts (tests, CI, Docker, license, completeness, deployability) separated projects the cheap ranking had scored alike; see DECISIONS D27 for the numbers and the weaknesses seen (a text-to-image tool first in one start-reading list, a missing summary after a rate limit, a harsh "stale" threshold). The dry run named a different set than the run cloned; fixed by printing a pinning command. Only the author has looked at the output.
 
 ## V3 discovery: ten-goal check (2026-10-22)
 `scripts/discovery_check.py` runs the finder on ten AI/ML goals (RAG chatbot, YOLO, time series, reinforcement learning, LoRA, recommender, Whisper, sentiment, LLM web scraper in TypeScript, CNN from scratch). The first run exposed a total failure for the recommender goal (README search let giant repos crowd out real ones) and padding with off-topic popular repos; both fixed (D26). Latest run: **0 red flags on all ten goals**, every goal's top results on topic. This catches obvious problems only; nobody but the author has looked at the recommendations. Open: deep analysis of finalists (clones repos, needs approval), calibrating weights, non-AI goals untested.
