@@ -19,6 +19,7 @@ pip install -r requirements.txt
 cp .env.example .env            # add at least one LLM key (GROQ_API_KEY or GEMINI_API_KEY); GITHUB_TOKEN is optional
 python -m repolens owner/name --md report.md      # or a GitHub URL, or a local git folder
 python -m repolens owner/name --no-llm            # deterministic analysis only, no keys needed
+python -m repolens.find "build a RAG chatbot" --language python   # find repos worth studying for a goal (no cloning)
 python -m pytest -q
 ```
 
@@ -50,7 +51,9 @@ Results are cached per repo and commit, versioned by analyzer version, so an unc
 
 V1 is code-complete: all 10 review repos are analyzed, narrated and explained, with 0 crashes and about 5 s per cached repo. **The human review (Gate A) was waived by the owner**, so the project is *machine-verified, human-unverified*: scores are first guesses, and nobody but the author has judged whether the reports are useful. See [docs/DECISIONS.md](docs/DECISIONS.md) (D18) and [docs/STATUS.md](docs/STATUS.md).
 
-Not built yet: finding repos for a goal (V3), a web app (V4), running repos in a sandbox (V5), community features (V6).
+V3 has started: `python -m repolens.find "<goal>"` ranks repositories for a goal from GitHub search data (relevance, freshness, popularity, size, a model's reading of each description), flags curated lists, and suggests an easiest-first order. It does not clone anything, so completeness and code quality are not assessed at that stage; analyzing finalists in depth is a separate, opt-in step.
+
+Not built yet: deep analysis of finalists inside the finder, a web app (V4), running repos in a sandbox (V5), community features (V6).
 
 ## Docs
 
@@ -78,6 +81,7 @@ repolens/
   narrate.py       cited narration + grounding         architecture.py  cited "how it works"
   audit.py         second-model claim audit            factcheck.py   facts vs GitHub
   answerability.py readers answer checkable questions  labels.py      human review CSV
+  discover.py      goal -> ranked repos (V3)           find.py        python -m repolens.find
   profile.py       pipeline + cache                    report.py      Markdown report
   storage.py       SQLite cache                        cli.py         command line
   llm/             providers, failover router, smoke test
