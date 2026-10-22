@@ -91,3 +91,28 @@ def test_dry_run_lists_what_would_be_cloned_and_downloads_nothing(monkeypatch, c
     assert "Would clone 2 repositories" in out and "2 MB" in out and "4 MB" in out and "Nothing was downloaded" in out
     assert find.main(["rag chatbot", "--no-llm", "--deep-repos", "b/beta", "--dry-run"]) == 0
     assert "Would clone 1 repositories" in capsys.readouterr().out
+
+
+def test_dry_run_prints_the_exact_command_that_reproduces_the_selection(monkeypatch, capsys):
+    ranked = [{**c, "size_kb": 1024} for c in ranked_two()]
+    monkeypatch.setattr(find, "keys_from_env", lambda: {})
+    monkeypatch.setattr(find, "gather", lambda *a, **k: [{}])
+    monkeypatch.setattr(find, "rank", lambda *a, **k: ranked)
+    monkeypatch.setattr(find, "run", lambda *a, **k: pytest.fail("a dry run must not analyze anything"))
+    assert find.main(["rag chatbot", "--language", "python", "--no-llm", "--deep", "2", "--dry-run"]) == 0
+    out = capsys.readouterr().out
+    assert "a later run can pick different repositories" in out
+    cmd = [l for l in out.splitlines() if "--deep-repos" in l][0].strip()
+    assert cmd.startswith('python -m repolens.find "rag chatbot" --language python --deep-repos ')
+    assert set(cmd.split("--deep-repos ")[1].split(",")) == {c["full_name"] for c in ranked}
+
+
+def test_a_named_repository_that_the_search_did_not_return_is_reported_not_silently_skipped(monkeypatch, capsys):
+    ranked = [{**c, "size_kb": 1024} for c in ranked_two()]
+    monkeypatch.setattr(find, "keys_from_env", lambda: {})
+    monkeypatch.setattr(find, "gather", lambda *a, **k: [{}])
+    monkeypatch.setattr(find, "rank", lambda *a, **k: ranked)
+    monkeypatch.setattr(find, "run", lambda *a, **k: pytest.fail("nothing should be analyzed in a dry run"))
+    assert find.main(["rag chatbot", "--no-llm", "--deep-repos", "a/alpha,ghost/repo", "--dry-run"]) == 0
+    captured = capsys.readouterr()
+    assert "Would clone 1 repositories" in captured.out and "ghost/repo" in captured.err and "NOT analyzed" in captured.err

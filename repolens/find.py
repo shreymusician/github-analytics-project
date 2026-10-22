@@ -68,12 +68,19 @@ def main(argv: list[str] | None = None) -> int:
 
     names = [n.strip() for n in a.deep_repos.split(",") if n.strip()]
     targets = select_targets(ranked, a.deep, names)
+    missing = [n for n in names if n.lower() not in {c["full_name"].lower() for c in targets}]
+    if missing:                                  # never skip a named repository silently
+        print(f"note: not in this search's ranked results, so NOT analyzed: {', '.join(missing)}", file=sys.stderr)
     if a.dry_run and (a.deep or names):
         total = sum((c.get("size_kb") or 0) for c in targets) / 1024
         print(f"Would clone {len(targets)} repositories (GitHub-reported size, upper bound; partial clones are usually smaller):")
         for c in targets:
             print(f"  {c['full_name']}: {(c.get('size_kb') or 0) / 1024:.0f} MB")
         print(f"  total up to about {total:.0f} MB. Nothing was downloaded.")
+        print("\nThe model writes the search queries and GitHub results shift, so a later run can pick different repositories.")
+        print("To analyze exactly these, run:")
+        print(f'  python -m repolens.find "{a.goal}"' + (f" --language {a.language}" if a.language else "")
+              + f' --deep-repos {",".join(c["full_name"] for c in targets)}')
         return 0
 
     if targets:
