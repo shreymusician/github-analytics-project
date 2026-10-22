@@ -2,7 +2,7 @@
 
 Last updated: 2026-10-21 (V1: code complete; Gate A machine-verified, human review waived by owner, see DECISIONS D18)
 
-## Built and tested (160 tests passing)
+## Built and tested (171 tests passing)
 
 | Component | File | Notes |
 |---|---|---|
@@ -76,6 +76,9 @@ Still unverified: whether a human finds the reports insightful and accurate. Tha
 - After adding the census, import evidence and grounding, two real Groq runs on `mini_proj` dropped 0 statements and traced library claims to the import evidence. The report now opens with "dominated by presentation slides (85%)" instead of "a single-file animation script".
 - The first grounding version dropped a true statement because the model cited the wrong ID; fixed by repairing citations (D13).
 - Not yet run: the GitHub clone path, the external signals inside a full `run()` on a real GitHub repo, and Gemini narration after the grounding change (Gemini was tested before it).
+
+## V3 discovery: ten-goal check (2026-10-22)
+`scripts/discovery_check.py` runs the finder on ten AI/ML goals (RAG chatbot, YOLO, time series, reinforcement learning, LoRA, recommender, Whisper, sentiment, LLM web scraper in TypeScript, CNN from scratch). The first run exposed a total failure for the recommender goal (README search let giant repos crowd out real ones) and padding with off-topic popular repos; both fixed (D26). Latest run: **0 red flags on all ten goals**, every goal's top results on topic. This catches obvious problems only; nobody but the author has looked at the recommendations. Open: deep analysis of finalists (clones repos, needs approval), calibrating weights, non-AI goals untested.
 
 ## V3 discovery: first live result (2026-10-22)
 For "I want to build a RAG chatbot over my documents" (python), the finder returned pathwaycom/serviette, bhaskatripathi/pdfGPT, llmware, Qwen-Agent, headroom and weaviate/Verba (archived), with the model's one-line reason for each. The first version put two curated lists at the top; collection detection plus a model reading of descriptions fixed that. **Checked by one goal and the author's eye only**: the ranking is plausible, not validated. Next: try more goals, calibrate weights on real feedback, add the opt-in deep analysis of finalists.

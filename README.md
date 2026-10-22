@@ -32,6 +32,7 @@ Useful scripts (run with `PYTHONPATH=.`):
 | `scripts/fact_check.py` | compare our facts with GitHub's own data |
 | `scripts/audit_gate_a.py` | a second model checks every claim against its evidence |
 | `scripts/audit_selftest.py` | plant false claims and confirm the judge catches them |
+| `scripts/discovery_check.py` | run the repo finder on ten goals and print objective red flags |
 | `scripts/answerability.py` | can a reader answer factual questions from the README vs our report? (graded by code) |
 | `scripts/make_labels.py` | refresh `data/labels/gate_a.csv` (human scores are never overwritten) |
 
