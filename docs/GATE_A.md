@@ -96,6 +96,10 @@ Because reading every report is slow, three automatic checks were run. They veri
 
 **3. Comparison with DeepWiki** (`docs/DEEPWIKI_COMPARISON.md`, three repos, overview pages only): DeepWiki explains what the code does and how, much better than we do (including for TypeScript); our reports add maintenance, test/CI/deployability, history and risk signals that its overview pages did not show. Complementary, not a replacement. Author's reading, not neutral.
 
+**4. Answerability test** (`scripts/answerability.py`, D24): nine factual questions answered from only the README, only our report, or both, graded by code against GitHub. README 37% correct (60% "does not say"), our report 98.8% correct. It covers the facts our report is built to give, so it shows the health layer works, not overall superiority.
+
+**Update (analyzer 17, three providers):** the independent audit now covers all ten repos with a different judge for every audit: 216 claims, 206 supported, 10 partly, none unsupported or contradicted. The "partly" ones are real overreach worth reading in `reports/gate_a/audit.json` (for example a reversed claim about which picoGPT file is readable).
+
 **What is still unknown and needs you:** whether a person finds the reports insightful, whether the maturity labels and read-first lists feel right, and whether the scores are too generous. The audit cannot answer those.
 
 ## Where to record your scores

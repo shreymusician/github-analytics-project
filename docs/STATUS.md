@@ -2,7 +2,7 @@
 
 Last updated: 2026-10-21 (V1: code complete; Gate A machine-verified, human review waived by owner, see DECISIONS D18)
 
-## Built and tested (126 tests passing)
+## Built and tested (139 tests passing)
 
 | Component | File | Notes |
 |---|---|---|
@@ -22,6 +22,8 @@ Last updated: 2026-10-21 (V1: code complete; Gate A machine-verified, human revi
 | Third-party import detection | `repolens/graph.py` | Works without any manifest; alias map (PIL -> Pillow); import-derived capability tags |
 | External signals (fail-soft) | `repolens/external.py` | GitHub facts (+ ecosyste.ms fallback), OpenSSF Scorecard, repo search and manifest deps (V3 helpers). Live-tested; `--offline` skips |
 | Citation grounding | `repolens/narrate.py` | Names/files/numbers must exist in the packet; wrong citations repaired, unsupported statements dropped with reasons (D13) |
+| Answerability test | `repolens/answerability.py`, `scripts/answerability.py` | Readers answer 9 checkable questions from the README / our report / both, graded by code against GitHub data (D24) |
+| CI detection | `repolens/ci.py` | One shared list of 20 CI systems used by analyzer and fact-check (D23) |
 | Notebook reader | `repolens/notebooks.py` | Outline, imports, reading view (sources only, never outputs, never executed); imports merged into the third-party counter; notebook-first repos get notebooks explained (D21) |
 | JS/TS import graph | `repolens/jsgraph.py`, merged in `graph.py` | Regex-based (D20); entry points, read-first, third-party imports, capability tags for TypeScript repos |
 | "How it works" stage | `repolens/architecture.py` | Reads up to 6 source excerpts (any language), cited S-IDs, shared grounding rules; opt-in `run(architecture=True)`; all 10 Gate A repos have one |
@@ -74,7 +76,13 @@ Still unverified: whether a human finds the reports insightful and accurate. Tha
 - The first grounding version dropped a true statement because the model cited the wrong ID; fixed by repairing citations (D13).
 - Not yet run: the GitHub clone path, the external signals inside a full `run()` on a real GitHub repo, and Gemini narration after the grounding change (Gemini was tested before it).
 
-## Latest Gate A set (analyzer version 16)
+## Verification of the latest set (analyzer version 17, three providers)
+- **Independent audit, finally:** with an OpenRouter key added (default model cohere/north-mini-code:free, the only one of nine free models that passed our narration test), all 20 audits (narration and "how it works" for 10 repos) were judged by a different provider than the narrator. 216 claims: 206 supported, 10 partly, 0 unsupported, 0 contradicted. The 10 "partly" are real overreach, for example picoGPT: the report said gpt2_pico.py is "intended for readability" while the evidence says it is the compact, less readable version.
+- **Answerability (D24):** README only 37% correct, 60% unknown, 2% wrong; our report 98.8% correct, 1% wrong. Caveat: the questions are ones the report is designed to answer.
+- **A bug the benchmark found (D23):** CI was only detected for GitHub Actions and GitLab, in the analyzer AND in the fact-check, so both wrongly said snips-nlu and image-super-resolution had no CI. Fixed with a shared detector for about 20 systems; those repos' deployability rose from 35 to 50.
+- **Report change:** an "At a glance" block with the key facts now opens every report.
+
+## Previous set (analyzer version 16)
 10/10 narrated, 10/10 with a "How it works" section, 0 crashes, **0 dropped statements**, warm runs about 5 s. Notebook-first repos (Reinforcement-Learning, how-to-train-your-gpt, roboflow/sports) now get capability tags and explanations that draw on their notebooks. Reading the earlier version-13 set below for the audit caveat.
 
 Bugs found and fixed this round (each with a regression test and a commit message explaining it):
