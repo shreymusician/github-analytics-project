@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="token" content="__TOKEN__">
+<title>RepoLens</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='28' cy='28' r='18' fill='none' stroke='%236d5efc' stroke-width='7'/%3E%3Cpath d='M42 42l14 14' stroke='%236d5efc' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-row">
+    <div class="brand">
+      <svg viewBox="0 0 64 64" width="30" height="30" aria-hidden="true"><circle cx="28" cy="28" r="18" fill="none" stroke="currentColor" stroke-width="7"/><path d="M42 42l14 14" stroke="currentColor" stroke-width="7" stroke-linecap="round"/></svg>
+      <div><h1>RepoLens</h1><p>Learn from other people's projects</p></div>
+    </div>
+    <div class="chips" id="status-chips" aria-live="polite"></div>
+    <button class="icon-btn" id="theme" type="button" title="Switch light / dark" aria-label="Switch light or dark theme">◐</button>
+  </div>
+  <nav class="wrap tabs" id="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" data-tab="find" type="button">🔍 Find repos</button>
+    <button role="tab" data-tab="analyze" type="button">🧪 Analyze a repo</button>
+    <button role="tab" data-tab="reports" type="button">📚 Reports</button>
+    <button role="tab" data-tab="project" type="button">🏗️ The project</button>
+  </nav>
+</header>
+
+<main class="wrap">
+  <section id="tab-find" class="panel" role="tabpanel" hidden>
+    <div class="card hero">
+      <h2>What do you want to build or learn?</h2>
+      <p class="muted">Describe it in a sentence. RepoLens searches GitHub, checks the candidates, and ranks the ones most worth studying. Nothing is downloaded until you ask for an in-depth analysis.</p>
+      <form id="find-form" class="row" autocomplete="off">
+        <input id="goal" type="text" maxlength="300" placeholder="e.g. a RAG chatbot over my documents" aria-label="Your goal" required>
+        <select id="lang" aria-label="Language"><option value="">Any language</option><option>python</option><option>javascript</option><option>typescript</option><option>go</option><option>rust</option><option>java</option></select>
+        <select id="top" aria-label="How many results"><option>3</option><option selected>6</option><option>10</option></select>
+        <button class="primary" type="submit" id="find-go">Find repos</button>
+      </form>
+      <div class="examples" id="examples"><span class="muted">Try:</span></div>
+    </div>
+    <div id="find-progress"></div>
+    <div id="find-results"></div>
+  </section>
+
+  <section id="tab-analyze" class="panel" role="tabpanel" hidden>
+    <div class="card hero">
+      <h2>Analyze any GitHub repository</h2>
+      <p class="muted">Enter <code>owner/name</code> or a github.com link. This makes a read-only partial copy on your machine, analyzes it, and builds a cited report. Nothing from the repository is ever run.</p>
+      <form id="analyze-form" class="row" autocomplete="off">
+        <input id="source" type="text" maxlength="200" placeholder="e.g. Cinnamon/kotaemon" aria-label="Repository" required>
+        <button class="primary" type="submit" id="analyze-go">Analyze</button>
+      </form>
+      <div class="examples" id="analyze-examples"><span class="muted">Try:</span></div>
+    </div>
+    <div id="analyze-progress"></div>
+    <div id="analyze-result"></div>
+  </section>
+
+  <section id="tab-reports" class="panel" role="tabpanel" hidden>
+    <div class="reports-layout">
+      <aside class="card reports-list">
+        <input id="report-filter" type="search" placeholder="Filter reports…" aria-label="Filter reports">
+        <div id="report-groups" class="muted">Loading…</div>
+      </aside>
+      <div id="report-view" class="report-view"><div class="card empty"><h3>Pick a report</h3><p class="muted">These are the reports this project has generated: the 10 review repos and any deep analyses. Open one to explore it.</p></div></div>
+    </div>
+  </section>
+
+  <section id="tab-project" class="panel" role="tabpanel" hidden>
+    <div id="project-root"><div class="card empty">Loading the project overview…</div></div>
+  </section>
+</main>
+
+<div id="modal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal-box"><h3 id="modal-title"></h3><div id="modal-body"></div>
+    <div class="row end"><button type="button" id="modal-cancel">Cancel</button><button type="button" class="primary" id="modal-ok">OK</button></div></div>
+</div>
+<div id="popover" class="popover" hidden role="tooltip"></div>
+<div id="toasts" class="toasts" aria-live="polite"></div>
+
+<footer class="wrap foot muted">RepoLens runs only on this machine. Your API keys stay in <code>.env</code> and are never sent to this page. Scores are heuristic first guesses; nothing here is a verdict.</footer>
+
+<script src="/static/core.js"></script>
+<script src="/static/report.js"></script>
+<script src="/static/tabs.js"></script>
+<script src="/static/project.js"></script>
+<script src="/static/main.js"></script>
+</body>
+</html>
