@@ -33,7 +33,7 @@ RL.loadAccount = async function () {
       h("a", { href: link, target: "_blank", rel: "noopener noreferrer" }, "Get a key ↗"))), h("div", { class: "row" }, input, save, remove));
   });
   root.appendChild(h("div", { class: "card" }, h("h3", {}, "Your model API keys"),
-    h("p", { class: "muted" }, "RepoLens uses YOUR keys to write the explanations, so it costs you nothing here and costs us nothing to run. Without any key you still get every computed fact (stack, history, tests, CI, scores); the written summary and walkthrough need at least one key. With several, RepoLens fails over between them automatically."),
+    h("p", { class: "muted" }, "GitHub Intel uses YOUR keys to write the explanations, so it costs you nothing here and costs us nothing to run. Without any key you still get every computed fact (stack, history, tests, CI, scores); the written summary and walkthrough need at least one key. With several, GitHub Intel fails over between them automatically."),
     h("p", { class: "muted small" }, "Keys are encrypted before they are stored, are only ever decrypted to run your own jobs, and are never sent back to this page. Short excerpts of public code (secrets scrubbed) are sent to the provider you choose."), rows));
 
   // password

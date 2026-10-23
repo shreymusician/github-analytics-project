@@ -1,4 +1,4 @@
-# Running RepoLens for other people
+# Running GitHub Intel for other people
 
 Status: written but **not yet tried on a real server**. The Dockerfile has never been built (the Docker daemon was not
 running when it was written). Expect to fix small things on the first deployment.
@@ -29,7 +29,7 @@ Accounts and keys are stored in `data/users.db` and `data/secret.key` (both git-
    REPOLENS_SMTP_PORT=587
    REPOLENS_SMTP_USER=...
    REPOLENS_SMTP_PASSWORD=...
-   REPOLENS_MAIL_FROM=RepoLens <no-reply@example.com>
+   REPOLENS_MAIL_FROM=GitHub Intel <no-reply@example.com>
    ```
 4. `docker compose up -d --build`
 5. Put an HTTPS reverse proxy in front (Caddy is the simplest: `reverse_proxy 127.0.0.1:8765`). The app marks cookies

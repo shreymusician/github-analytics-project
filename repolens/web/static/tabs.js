@@ -77,7 +77,7 @@ RL.initAnalyze = function () {
     const source = RL.$("source").value.trim();
     if (!source) return;
     const ok = await RL.confirm("Analyze " + source + "?", [
-      h("p", {}, "RepoLens will make a read-only partial copy of this repository on your computer (history, but file contents only for the latest commit) and analyze it. Nothing from it is ever run."),
+      h("p", {}, "GitHub Intel will make a read-only partial copy of this repository on your computer (history, but file contents only for the latest commit) and analyze it. Nothing from it is ever run."),
       h("p", { class: "muted small" }, "It can take from under a minute to a few minutes for big repositories. If you have model keys, short pieces of the code (secrets scrubbed) are sent to your configured providers for the explanation.")], "Analyze");
     if (!ok) return;
     const go = RL.$("analyze-go"); go.disabled = true;

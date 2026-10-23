@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const mode = MODES[location.pathname.replace("/", "")] ? location.pathname.replace("/", "") : "login";
   const m = MODES[mode], params = new URLSearchParams(location.search);
   RL.$("auth-kicker").textContent = m.kicker; RL.$("auth-title").textContent = m.title; RL.$("auth-sub").textContent = m.sub;
-  RL.$("auth-go").textContent = m.go; document.title = `RepoLens - ${m.title.toLowerCase()}`;
+  RL.$("auth-go").textContent = m.go; document.title = `GitHub Intel - ${m.title.toLowerCase()}`;
   RL.$("pw-wrap").hidden = mode === "forgot"; RL.$("email-wrap").hidden = mode === "reset";
   RL.$("email").required = mode !== "reset"; RL.$("password").required = mode !== "forgot";
   if (m.pw) RL.$("password").autocomplete = m.pw;

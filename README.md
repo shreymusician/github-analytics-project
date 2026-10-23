@@ -1,8 +1,8 @@
-# RepoLens (working name)
+# GitHub Intel
 
 A GitHub intelligence tool that helps people **learn from other people's projects**. Give it a repository and it tells you what the README never does: what the project really is, how it works, whether it is alive, tested and runnable, and which files to read first. Every claim cites the evidence it came from.
 
-> GitHub is built around personal and team project management. There is no good way to learn from the world's projects at scale. RepoLens is that layer.
+> GitHub is built around personal and team project management. There is no good way to learn from the world's projects at scale. GitHub Intel is that layer.
 
 ## What a report contains
 
@@ -18,7 +18,7 @@ A GitHub intelligence tool that helps people **learn from other people's project
 python -m repolens.web
 ```
 
-Opens a landing page at http://127.0.0.1:8765/ with sign up and log in. Inside: **Find repos** for a goal, **Analyze a repo**, **Reports** (your history plus the saved samples, with clickable citations that show the evidence), **The project** (how RepoLens is built), and **Account** (your own model API keys, usage, password). Every user brings their own keys, stored encrypted; with no keys you still get every computed fact. See decisions D28 and D29, and `docs/DEPLOY.md` for running it for other people.
+Opens a landing page at http://127.0.0.1:8765/ with sign up and log in. Inside: **Find repos** for a goal, **Analyze a repo**, **Reports** (your history plus the saved samples, with clickable citations that show the evidence), **The project** (how GitHub Intel is built), and **Account** (your own model API keys, usage, password). Every user brings their own keys, stored encrypted; with no keys you still get every computed fact. See decisions D28 and D29, and `docs/DEPLOY.md` for running it for other people.
 
 ## Quick start
 

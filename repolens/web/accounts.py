@@ -1,4 +1,4 @@
-"""User accounts for the hosted version of RepoLens (standard library plus `cryptography` for key storage).
+"""User accounts for the hosted version of GitHub Intel (standard library plus `cryptography` for key storage).
 
 What is stored and how:
 - passwords: never stored; only a salted scrypt hash. Wrong logins and unknown emails take the same time and give the
@@ -259,9 +259,9 @@ class Accounts:
             db.execute("INSERT INTO tokens(th, user_id, purpose, expires) VALUES(?,?,?,?)",
                        (_sha(token), uid, purpose, self.now() + TOKEN_HOURS[purpose] * 3600))
         if purpose == "verify":
-            self.mailer.send(email, "Confirm your RepoLens email", f"Welcome to RepoLens.\n\nConfirm your email:\n{self.base_url}/verify?token={token}\n\nIf this was not you, ignore this message.")
+            self.mailer.send(email, "Confirm your GitHub Intel email", f"Welcome to GitHub Intel.\n\nConfirm your email:\n{self.base_url}/verify?token={token}\n\nIf this was not you, ignore this message.")
         else:
-            self.mailer.send(email, "Reset your RepoLens password", f"Choose a new password (link valid for one hour):\n{self.base_url}/reset?token={token}\n\nIf you did not ask for this, ignore this message.")
+            self.mailer.send(email, "Reset your GitHub Intel password", f"Choose a new password (link valid for one hour):\n{self.base_url}/reset?token={token}\n\nIf you did not ask for this, ignore this message.")
 
     def _use_token(self, token, purpose: str) -> int | None:
         if not isinstance(token, str) or len(token) > 100:

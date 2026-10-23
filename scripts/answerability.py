@@ -1,7 +1,7 @@
 """Run the answerability test over the Gate A repos. Run: PYTHONPATH=. python scripts/answerability.py
 
 For each repo three documents are shown, one at a time, to a model that must answer checkable questions using only
-that document: the repo's README, RepoLens's report, and both. Answers are graded by code against GitHub's data.
+that document: the repo's README, GitHub Intel's report, and both. Answers are graded by code against GitHub's data.
 Uses your own API keys. Writes <GATE_A_DIR>/answerability.json.
 """
 import json

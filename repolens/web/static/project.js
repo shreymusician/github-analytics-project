@@ -1,5 +1,5 @@
 "use strict";
-/* "The project" tab: how RepoLens itself is built, read live from the repository's own files. */
+/* "The project" tab: how GitHub Intel itself is built, read live from the repository's own files. */
 
 RL.loadProject = async function () {
   if (RL.projectLoaded) return;
@@ -10,7 +10,7 @@ RL.loadProject = async function () {
   RL.clear(root);
   const s = d.stats, rm = d.roadmap;
 
-  root.appendChild(h("div", { class: "card" }, h("h2", {}, "How RepoLens is built"),
+  root.appendChild(h("div", { class: "card" }, h("h2", {}, "How GitHub Intel is built"),
     h("p", { class: "muted" }, "Everything on this tab is read live from this project's own files and git history, so it can't drift from the truth.")));
 
   root.appendChild(h("div", { class: "stats" }, [["commits", s.commits], ["modules", s.modules], ["lines of code", s.code_lines], ["test functions", s.test_functions],

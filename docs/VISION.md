@@ -33,7 +33,7 @@ The research (October 2026, shallow, mostly secondary sources; see caveats) foun
 | Health / quality | [OpenSSF Scorecard](https://cisa.gov/resources-tools/services/openssf-scorecard) (security), [CHAOSS](https://wiki.linuxfoundation.org/chaoss/metrics) (community health) | Built for maintainers and enterprises, not learners |
 | Similar-repo search | [RepoSnipy/RepoSim](https://research-portal.st-andrews.ac.uk/en/publications/mapping-the-repository-landscape-harnessing-similarity-with-repos/) (Python only), [MetaSim](https://conf.researchr.org/details/icsme-2024/icsme-2024-tool-demo-track/3/MetaSim-A-search-engine-for-finding-Similar-GitHub-Repositories), [GitHub Repo Radar](https://chromewebstore.google.com/detail/bceechbnflcmoabbeahepafgackkjcno) | Research prototypes, narrow, often dated |
 
-**Where RepoLens is different**
+**Where GitHub Intel is different**
 1. *Inferred insight*: completeness, deployability and "what it really is", each backed by cited evidence.
 2. *Guided exploration*: learning paths, not search results.
 3. *Cross-repo analytics* once repos are structured data.

@@ -1,12 +1,12 @@
-# DeepWiki vs RepoLens: a first, small comparison
+# DeepWiki vs GitHub Intel: a first, small comparison
 
 Date: 2026-10-21. Three repos, DeepWiki **overview pages only**, read through the built-in browser (the plain HTTP fetcher got 429 Too Many Requests on every try, so DeepWiki appears to rate-limit automated fetchers). Our side is the Gate A report at analyzer version 8.
 
-**Bias warning.** I built RepoLens and wrote this comparison. It is a builder's reading, not a neutral evaluation, and three repos is an anecdote. DeepWiki has many sub-pages beyond the overview (for example sections on pipelines, APIs, testing) that I did not read, so "DeepWiki doesn't mention X" below means "X is not on the overview page".
+**Bias warning.** I built GitHub Intel and wrote this comparison. It is a builder's reading, not a neutral evaluation, and three repos is an anecdote. DeepWiki has many sub-pages beyond the overview (for example sections on pipelines, APIs, testing) that I did not read, so "DeepWiki doesn't mention X" below means "X is not on the overview page".
 
 ## What I found
 
-| | DeepWiki (overview page) | RepoLens report |
+| | DeepWiki (overview page) | GitHub Intel report |
 |---|---|---|
 | **What the code does and how** | **Much stronger.** Names the architecture (chonkie's CHOMP pipeline), lists subsystems with their key classes, shows class hierarchies and data flow diagrams, runnable example code, source-line references, and a navigable wiki roadmap. For snips-nlu it walks the whole NLU pipeline step by step. | One-paragraph summary and scope. Accurate but shallow. "Read first" lists are weak (chonkie's top picks are `types/__init__.py` and `__init__.py`). |
 | **TypeScript repo (llm-scraper)** | Handles it well: components, the three run modes, content formats, providers. | Partial analysis only: no read-first list, no architecture. Clearly the weakest of our ten reports. |
@@ -27,7 +27,7 @@ Date: 2026-10-21. Three repos, DeepWiki **overview pages only**, read through th
 
 - Read several sub-pages per repo (not just the overview), including any testing, deployment and maintenance sections.
 - Try more repos, including abandoned and notebook-heavy ones (only three were checked, all of which DeepWiki had indexed).
-- Have someone who did not build RepoLens judge both side by side. That is what the Gate A human review is for.
+- Have someone who did not build GitHub Intel judge both side by side. That is what the Gate A human review is for.
 
 ## Addendum: after adding the "How it works" stage (same day)
 

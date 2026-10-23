@@ -151,7 +151,7 @@ The pipeline combines: (1) lazy analysis, (2) a live discovery agent, (3) depend
 **Honest limits:** checked in a browser only by the author on one machine; no phone or other-browser testing; thumbs up/down are saved to `data/feedback/feedback.jsonl` (git-ignored) but nothing uses them yet; it is a local tool, not a hosted product.
 
 ## D29. Accounts for a hosted, bring-your-own-key version
-**Decision:** RepoLens now has a landing page, sign up, log in, email confirmation and password reset, with the app behind a login. Each user supplies their own model API keys; the server's own `.env` keys are not used unless `REPOLENS_USE_SERVER_KEYS=1`. Replaces the single-user secret-link design of D28.
+**Decision:** GitHub Intel now has a landing page, sign up, log in, email confirmation and password reset, with the app behind a login. Each user supplies their own model API keys; the server's own `.env` keys are not used unless `REPOLENS_USE_SERVER_KEYS=1`. Replaces the single-user secret-link design of D28.
 **Security choices:** passwords are stored only as salted scrypt hashes; unknown email and wrong password give the same message and take the same time, and failures are rate limited; sessions are random tokens in an HttpOnly, SameSite=Strict cookie (Secure and HSTS over https), stored only as a hash; state-changing requests need the session's CSRF token and a same-site Origin; confirmation and reset links are single use and expire; a job can only be read by the user who started it, each user runs one at a time, and daily quotas apply; users' API keys are encrypted at rest with a server secret and are never sent back to the page; deleting an account deletes everything it owned.
 **Trade-offs accepted:** signing up with an email that already exists says so (it is friendlier, and it leaks that the email has an account; login and password reset do not leak it). Login rate limits live in memory. Results are saved per user in SQLite.
 **Honest limits:** tested only on one machine with fake users. Sending email needs SMTP settings; without them links are printed in the console. The Dockerfile and compose file were written but never built (Docker was not running). Cloning arbitrary repositories on a shared server still needs disk, size and time limits. Nobody but the author has used it.
@@ -166,3 +166,8 @@ The pipeline combines: (1) lazy analysis, (2) a live discovery agent, (3) depend
 - Local tool vs. hosted service? (affects sandbox design and key handling)
 - Backend stack: Python/FastAPI assumed; unconfirmed.
 - Frontend form: paste-a-URL page vs. browser extension vs. chat UI.
+
+## D31. The product is named GitHub Intel
+**Decision:** the name shown everywhere (pages, emails, README, docs, headings, messages) is **GitHub Intel**, matching the logo. The working name RepoLens is retired from user-facing text.
+**What stayed on purpose:** the Python package and command are still `repolens` (`python -m repolens`, `python -m repolens.web`), the `REPOLENS_*` environment variables, the `.cache/repolens.db` file name and the GitHub repository name. Renaming those would break imports, saved configuration and existing caches for no user benefit; it can be done later as its own change.
+**Note:** the project is not affiliated with GitHub; the landing page says so.

@@ -35,7 +35,7 @@ RL.api = async function (path, body) {
     opts.body = JSON.stringify(body);
   }
   let r;
-  try { r = await fetch(path, opts); } catch (e) { throw new Error("Could not reach the RepoLens server. Is it still running?"); }
+  try { r = await fetch(path, opts); } catch (e) { throw new Error("Could not reach the GitHub Intel server. Is it still running?"); }
   let data = null;
   try { data = await r.json(); } catch (e) { /* fall through */ }
   if (r.status === 401 && !path.startsWith("/api/auth/")) { location.href = "/login"; throw new Error("Please log in."); }

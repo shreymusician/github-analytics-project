@@ -1,4 +1,4 @@
-# A starting point for running RepoLens for other people. Put it behind an HTTPS reverse proxy (Caddy, nginx,
+# A starting point for running GitHub Intel for other people. Put it behind an HTTPS reverse proxy (Caddy, nginx,
 # a cloud load balancer): the proxy terminates TLS and forwards to port 8765. See docs/DEPLOY.md.
 services:
   repolens:

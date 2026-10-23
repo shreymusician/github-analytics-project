@@ -1,4 +1,4 @@
-"""The RepoLens web server (standard library only): landing page, accounts, and the app behind a login.
+"""The GitHub Intel web server (standard library only): landing page, accounts, and the app behind a login.
 
 Security, because this process holds users' API keys and can clone repositories:
 - accounts: passwords are hashed, sessions are random tokens in an HttpOnly SameSite=Strict cookie (Secure over HTTPS),
@@ -45,7 +45,7 @@ def make_server(service: Service, accounts: Accounts, host: str = "127.0.0.1", p
     cookie_name = "__Host-rl_session" if secure_cookies else "rl_session"
 
     class Handler(BaseHTTPRequestHandler):
-        server_version = "RepoLens"
+        server_version = "GitHubIntel"
         sys_version = ""
 
         # --------------------------------------------------------------- helpers

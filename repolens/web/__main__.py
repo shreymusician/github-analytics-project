@@ -1,6 +1,6 @@
 """python -m repolens.web [--port 8765] [--host 127.0.0.1] [--public-url URL] [--no-open]
 
-Runs RepoLens: a landing page, accounts, and the app behind a login. Every user brings their own model API keys.
+Runs GitHub Intel: a landing page, accounts, and the app behind a login. Every user brings their own model API keys.
 Settings can also come from environment variables (handy in Docker):
   REPOLENS_HOST, REPOLENS_PORT, REPOLENS_PUBLIC_URL (e.g. https://repolens.example.com), REPOLENS_ALLOWED_HOSTS
   (comma separated host[:port] values the server answers to), REPOLENS_SECURE_COOKIES=1 (when served over HTTPS),
@@ -30,7 +30,7 @@ def flag(name: str) -> bool:
 def main(argv: list[str] | None = None) -> int:
     load_dotenv(".env")
     env = os.environ.get
-    ap = argparse.ArgumentParser(prog="repolens.web", description="Run the RepoLens web app.")
+    ap = argparse.ArgumentParser(prog="repolens.web", description="Run the GitHub Intel web app.")
     ap.add_argument("--host", default=env("REPOLENS_HOST", "127.0.0.1"), help="address to listen on (default 127.0.0.1; use 0.0.0.0 in Docker)")
     ap.add_argument("--port", type=int, default=int(env("REPOLENS_PORT", "8765")))
     ap.add_argument("--public-url", default=env("REPOLENS_PUBLIC_URL"), help="the address users type, used in emailed links")
@@ -50,7 +50,7 @@ def main(argv: list[str] | None = None) -> int:
     server = make_server(service, accounts, a.host, a.port, allowed_hosts=allowed or None, secure_cookies=secure,
                          trust_proxy=flag("REPOLENS_TRUST_PROXY"), require_verified=require_verified)
     url = f"http://127.0.0.1:{server.server_address[1]}/"
-    print(f"RepoLens is running at {public + '/' if a.public_url else url}\n"
+    print(f"GitHub Intel is running at {public + '/' if a.public_url else url}\n"
           f"  accounts: {data / 'users.db'}   email: {'SMTP' if accounts.mailer.real else 'printed here (no SMTP configured)'}   "
           f"cookies: {'secure' if secure else 'plain http (local use)'}\nCtrl+C to stop.")
     if not a.no_open and not a.public_url:
