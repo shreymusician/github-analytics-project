@@ -1,3 +1,6 @@
+/* DM Mono (weight 500 only), self-hosted because the page's security policy allows no external fonts.
+   SIL Open Font License 1.1, from the Fontsource package @fontsource/dm-mono. */
+@font-face{font-family:"DM Mono";font-style:normal;font-weight:500;font-display:swap;src:url("/static/dm-mono-500.woff2") format("woff2")}
 /* Swiss / International style: a strict grid, one grotesque sans, black on off-white, ONE red accent.
    Flat: no shadows, no rounded corners. Hierarchy comes from size, weight and thick rules. Mono only for code.
    System fonts only, so nothing is fetched (Helvetica Neue / Arial stack, or Archivo if installed). */
@@ -6,7 +9,8 @@
   --good:#14602e;--good-bg:transparent;--warn:#7a4f00;--warn-bg:transparent;--bad:#b00000;--bad-bg:#fbe3e0;--info:#0a0a0a;--info-bg:#e6e6dc;
   --code:#e6e6dc;
   --sans:Archivo,"Helvetica Neue",Helvetica,Arial,"Liberation Sans",sans-serif;
-  --mono:ui-monospace,"Cascadia Mono",Consolas,"SF Mono",monospace;
+  --font-label:'DM Mono',ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;
+  --mono:var(--font-label);
   --gap:24px;
 }
 :root[data-theme="dark"]{
@@ -203,3 +207,35 @@ th{font-size:.68rem}
   .commit{grid-template-columns:62px 1fr}.commit .d{display:none}
   .stage{grid-template-columns:48px 1fr}
 }
+
+/* ---- Typography ------------------------------------------------------------------------------------------------
+   Two families only: the grotesque sans (headings and reading) and DM Mono (labels, metadata, captions, numbers,
+   code). DM Mono has one weight here (500), so it is never bolded. Fixed scale: 14 / 18 / 24 / 36 / 56 / 88 px;
+   labels are 11-13px, uppercase, letter-spacing .08em, tabular numbers. */
+body{font-size:14px}
+h2{font-size:24px}h3{font-size:18px}
+.hero h2{font-size:36px}
+.brand h1{font-size:24px}
+.md h1{font-size:36px}.md h2{font-size:24px}.md h3{font-size:18px}
+.stat b,.repo h3 .name,.score .big{font-size:36px}
+.repo h3 .name{font-size:24px}
+.repo h3 .rank,.gauge .num{font-size:56px}
+.steps li::before,.stage .n{font-size:36px}
+.big-pcts b{font-size:88px}
+.big-pcts .card+.card b{font-size:56px}
+.gauge .num span{font-size:14px}
+
+.label,.kv b,.stat span,th,h4,.reports-list h4,.badge,.tabs button,.icon-btn,.cite,.fb button,.toast,
+.repo .meta,.part,.prog ul,.commit,.reasons small,.reasons .m,.rm li .st,.rm summary b,.examples,.score span.muted,
+.file,code,pre,.kv span,.mod b,.popover b,.small.muted.mono{
+  font-family:var(--font-label);font-weight:500;font-synthesis:none;font-variant-numeric:tabular-nums}
+.label,.kv b,.stat span,th,h4,.reports-list h4,.badge,.tabs button,.icon-btn,.cite,.fb button{
+  font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+.cite{font-size:11px}
+.badge{font-size:11px}
+.repo .meta,.part,.prog ul,.commit,.reasons small,.kv span,.mod b,.file,code,pre,.toast{font-size:13px}
+.kv span{text-align:right}
+.rm summary b,.rm li .st{font-size:13px}
+.examples button{font-family:var(--font-label);font-weight:500;font-size:13px;letter-spacing:.02em}
+.reports-list button .muted{font-family:var(--font-label);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+.big-pcts .card div{font-family:var(--font-label);font-weight:500;font-synthesis:none;font-size:12px;text-transform:uppercase;letter-spacing:.08em}
