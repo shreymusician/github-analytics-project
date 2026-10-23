@@ -171,14 +171,22 @@
           "note": "saved to a local file; nothing reads it to calibrate yet"
         },
         {
+          "t": "Landing page, sign up / log in / password reset, per-user history and daily limits",
+          "s": "done",
+          "w": 2,
+          "note": "28 server tests; checked in a browser by the author only; email goes to the console unless SMTP is set"
+        },
+        {
           "t": "Bring-your-own-key handling for a hosted version",
-          "s": "todo",
-          "w": 2
+          "s": "done",
+          "w": 2,
+          "note": "each user's keys are stored encrypted and used only for their jobs; unit-tested, not yet exercised by real users"
         },
         {
           "t": "Hosted deployment and shareable report links",
-          "s": "todo",
-          "w": 2
+          "s": "partial",
+          "w": 2,
+          "note": "Dockerfile, compose file and DEPLOY.md written; never built or run (Docker was not running), no real server yet; shareable report links not built"
         },
         {
           "t": "Private beta with real learners",
@@ -221,7 +229,8 @@
       "items": [
         {
           "t": "Accounts and saved lists",
-          "s": "todo"
+          "s": "partial",
+          "note": "accounts and a private history exist; saved lists do not"
         },
         {
           "t": "Community annotations tied to a commit",
@@ -246,6 +255,7 @@
     "The human review of the first 10 reports was waived, so they are machine-verified only.",
     "Only AI/ML-style goals have been tried. Languages beyond Python, JavaScript/TypeScript and notebooks get partial analysis.",
     "An audit can be wrong too, and its judge sees the same evidence as the writer. Cited does not mean complete.",
-    "Free-tier model providers change and rate-limit without warning; narration can fail and is retried, never invented."
+    "Free-tier model providers change and rate-limit without warning; narration can fail and is retried, never invented.",
+    "Accounts and hosting have only been tested on one machine with a handful of fake users. The Dockerfile has never been built, the first real deployment will find problems, and cloning arbitrary repositories on a shared server needs disk and time limits that are not set yet."
   ]
 }
