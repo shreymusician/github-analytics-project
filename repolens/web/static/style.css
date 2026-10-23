@@ -1,14 +1,17 @@
+/* Young Serif (400 only), self-hosted. SIL Open Font License 1.1, from @fontsource/young-serif. */
+@font-face{font-family:"Young Serif";font-style:normal;font-weight:400;font-display:swap;src:url("/static/young-serif-400.woff2") format("woff2")}
 /* DM Mono (weight 500 only), self-hosted because the page's security policy allows no external fonts.
    SIL Open Font License 1.1, from the Fontsource package @fontsource/dm-mono. */
 @font-face{font-family:"DM Mono";font-style:normal;font-weight:500;font-display:swap;src:url("/static/dm-mono-500.woff2") format("woff2")}
-/* Swiss / International style: a strict grid, one grotesque sans, black on off-white, ONE red accent.
+/* Swiss / International layout (strict grid, black on off-white, ONE red accent) set in Young Serif + DM Mono.
    Flat: no shadows, no rounded corners. Hierarchy comes from size, weight and thick rules. Mono only for code.
-   System fonts only, so nothing is fetched (Helvetica Neue / Arial stack, or Archivo if installed). */
+   Both fonts are self-hosted (the page's security policy allows no external fonts). */
 :root{
   --bg:#f4f4ee;--panel:#f4f4ee;--ink:#0a0a0a;--muted:#55554f;--line:#c9c9c0;--accent:#d10a0a;--accent-ink:#ffffff;
   --good:#14602e;--good-bg:transparent;--warn:#7a4f00;--warn-bg:transparent;--bad:#b00000;--bad-bg:#fbe3e0;--info:#0a0a0a;--info-bg:#e6e6dc;
   --code:#e6e6dc;
-  --sans:Archivo,"Helvetica Neue",Helvetica,Arial,"Liberation Sans",sans-serif;
+  --font-body:'Young Serif',Georgia,'Times New Roman',serif;
+  --sans:var(--font-body);
   --font-label:'DM Mono',ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;
   --mono:var(--font-label);
   --gap:24px;
@@ -239,3 +242,28 @@ h2{font-size:24px}h3{font-size:18px}
 .examples button{font-family:var(--font-label);font-weight:500;font-size:13px;letter-spacing:.02em}
 .reports-list button .muted{font-family:var(--font-label);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
 .big-pcts .card div{font-family:var(--font-label);font-weight:500;font-synthesis:none;font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+
+/* ---- Young Serif is the body face ------------------------------------------------------------------------------
+   Two families on the page: Young Serif (headings, reading, big numerals) and DM Mono (labels, metadata, code).
+   Neither has a bold or an italic, so both are pinned to their one real style and never synthesized.
+   Scale 14 / 18 / 24 / 36 / 56 / 88px; body 18px at line-height 1.6, paragraphs at most 64ch, left-aligned. */
+*{font-weight:400!important;font-style:normal!important;font-synthesis:none!important}
+body{font-family:var(--font-body);font-size:18px;line-height:1.6}
+p{max-width:64ch;text-align:left}
+.small{font-size:14px}
+table,.reasons,.prog ul{font-size:14px}
+.reasons li,.order li,.limits li,.dec p{max-width:none}
+.quote{font-size:18px}
+input,select,textarea{font-family:var(--font-body);font-size:18px}
+button{font-family:var(--font-label);font-size:13px;text-transform:uppercase;letter-spacing:.08em}
+.examples button,.reports-list button{text-transform:none;letter-spacing:.02em}
+.reports-list button{font-family:var(--font-body);font-size:16px}
+.reports-list button .muted{font-family:var(--font-label)}
+b{font-family:var(--font-label);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+.stat b,.big-pcts b,.score .big{font-family:var(--font-body);text-transform:none;letter-spacing:-.01em}
+.stat b,.score .big{font-size:36px}
+.big-pcts b{font-size:88px}.big-pcts .card+.card b{font-size:56px}
+.mod b,.kv b,.rm summary b{font-family:var(--font-label)}
+h4{font-family:var(--font-label)}
+a{text-decoration-thickness:1.5px}
+.md i{font-style:normal}
