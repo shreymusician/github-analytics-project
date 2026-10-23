@@ -1,0 +1,251 @@
+{
+  "updated": "2026-10-23",
+  "how": "Each version's percent = (done weight + half of partial weight) / total weight, where an item's weight is its effort size (default 1; big items such as calibration, hosting or the sandbox count 2 or 3). 'Core' = V0 to V4 and 'full' = all versions, both weighted by version size. Statuses are my honest reading of docs/STATUS.md; edit this file when reality changes.",
+  "versions": [
+    {
+      "id": "V0",
+      "name": "Foundation",
+      "weight": 1,
+      "goal": "Prove the custom-algorithm approach and lay the groundwork.",
+      "items": [
+        {
+          "t": "Analyzers: stack, import graph + PageRank, git history, rules engine",
+          "s": "done"
+        },
+        {
+          "t": "LLM router with failover across providers",
+          "s": "done"
+        },
+        {
+          "t": "Command line, tests, docs",
+          "s": "done"
+        }
+      ]
+    },
+    {
+      "id": "V1",
+      "name": "Single-repo brain",
+      "weight": 3,
+      "goal": "Give any repo, get a trustworthy, cited report.",
+      "items": [
+        {
+          "t": "Evidence packet with numbered facts and fenced untrusted text",
+          "s": "done"
+        },
+        {
+          "t": "LLM narration where every claim must cite evidence",
+          "s": "done"
+        },
+        {
+          "t": "Cache per repo and commit, versioned by analyzer",
+          "s": "done"
+        },
+        {
+          "t": "Markdown report with scores and reasons",
+          "s": "done"
+        },
+        {
+          "t": "Graceful fallback when no model answers",
+          "s": "done"
+        },
+        {
+          "t": "Real GitHub clone path verified on 10 repos",
+          "s": "done"
+        },
+        {
+          "t": "Human review of the reports (Gate A)",
+          "s": "todo",
+          "note": "waived by the owner; recorded as machine-verified, human-unverified",
+          "w": 2
+        }
+      ]
+    },
+    {
+      "id": "V2",
+      "name": "Trust",
+      "weight": 4,
+      "goal": "Make the scores and claims believable, and support more than Python.",
+      "items": [
+        {
+          "t": "JavaScript/TypeScript import graph",
+          "s": "done",
+          "note": "regex-based, no alias resolution"
+        },
+        {
+          "t": "Notebook support (outline, imports, reading view)",
+          "s": "done"
+        },
+        {
+          "t": "CI detection for about 20 systems (found by the answerability test)",
+          "s": "done"
+        },
+        {
+          "t": "Independent audit of every claim by a different model",
+          "s": "done"
+        },
+        {
+          "t": "Facts cross-checked against GitHub",
+          "s": "done"
+        },
+        {
+          "t": "Answerability test (readers answer checkable questions)",
+          "s": "done"
+        },
+        {
+          "t": "Scores calibrated against human-labelled repos",
+          "s": "todo",
+          "w": 3
+        },
+        {
+          "t": "Confidence levels on scores",
+          "s": "todo"
+        },
+        {
+          "t": "Exact parsing (tree-sitter) and Go/Rust/Java",
+          "s": "todo",
+          "w": 2
+        }
+      ]
+    },
+    {
+      "id": "V3",
+      "name": "Find repos for a goal",
+      "weight": 5,
+      "goal": "From 'I want to build X' to a short, explained list worth studying.",
+      "items": [
+        {
+          "t": "Goal to search words (model-assisted, injection-safe)",
+          "s": "done"
+        },
+        {
+          "t": "GitHub search with rate-limit handling",
+          "s": "done"
+        },
+        {
+          "t": "Cheap stack verification without cloning",
+          "s": "done"
+        },
+        {
+          "t": "Explained ranking with collection detection and model relevance",
+          "s": "done"
+        },
+        {
+          "t": "Deep analysis of finalists (opt-in clone, dry run)",
+          "s": "done"
+        },
+        {
+          "t": "Reading order across repos",
+          "s": "partial",
+          "note": "easiest-first by size only"
+        },
+        {
+          "t": "Fingerprint store for similar-repo lookup",
+          "s": "todo"
+        },
+        {
+          "t": "Agent loop that reads READMEs",
+          "s": "todo",
+          "w": 2
+        },
+        {
+          "t": "Ranking weights calibrated with real users",
+          "s": "todo",
+          "w": 2
+        }
+      ]
+    },
+    {
+      "id": "V4",
+      "name": "Usable product",
+      "weight": 5,
+      "goal": "A real person can use it without a terminal.",
+      "items": [
+        {
+          "t": "Local interactive web page (find, analyze, browse reports, explore the project)",
+          "s": "partial",
+          "note": "being built now"
+        },
+        {
+          "t": "Thumbs up/down feedback saved for calibration",
+          "s": "partial",
+          "note": "being built now"
+        },
+        {
+          "t": "Bring-your-own-key handling for a hosted version",
+          "s": "todo",
+          "w": 2
+        },
+        {
+          "t": "Hosted deployment and shareable report links",
+          "s": "todo",
+          "w": 2
+        },
+        {
+          "t": "Private beta with real learners",
+          "s": "todo",
+          "w": 2
+        }
+      ]
+    },
+    {
+      "id": "V5",
+      "name": "Prove it runs",
+      "weight": 5,
+      "goal": "Turn 'probably deployable' into 'we ran it and it started'.",
+      "items": [
+        {
+          "t": "Threat model for running untrusted code",
+          "s": "todo",
+          "w": 2
+        },
+        {
+          "t": "Run-recipe detection (Dockerfile, Makefile, README)",
+          "s": "todo"
+        },
+        {
+          "t": "Sandboxed build and start",
+          "s": "todo",
+          "w": 3
+        },
+        {
+          "t": "Results shown as hard evidence in the report",
+          "s": "todo"
+        }
+      ]
+    },
+    {
+      "id": "V6",
+      "name": "Community",
+      "weight": 5,
+      "goal": "Knowledge that compounds across users.",
+      "items": [
+        {
+          "t": "Accounts and saved lists",
+          "s": "todo"
+        },
+        {
+          "t": "Community annotations tied to a commit",
+          "s": "todo",
+          "w": 2
+        },
+        {
+          "t": "Cross-repo analytics and compare view",
+          "s": "todo",
+          "w": 2
+        },
+        {
+          "t": "Trend views",
+          "s": "todo"
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "Nobody except the author has used it. Quality was judged by me, automated checks and AI judges.",
+    "Scores and ranking weights are first guesses, not calibrated against real opinions.",
+    "The human review of the first 10 reports was waived, so they are machine-verified only.",
+    "Only AI/ML-style goals have been tried. Languages beyond Python, JavaScript/TypeScript and notebooks get partial analysis.",
+    "An audit can be wrong too, and its judge sees the same evidence as the writer. Cited does not mean complete.",
+    "Free-tier model providers change and rate-limit without warning; narration can fail and is retried, never invented."
+  ]
+}
