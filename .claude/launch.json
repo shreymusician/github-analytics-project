@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "repolens-web",
+      "runtimeExecutable": "C:/Users/HP/AppData/Local/Microsoft/WindowsApps/PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0/python.exe",
+      "runtimeArgs": ["-m", "repolens.web", "--no-open", "--port", "8765", "--token", "devtoken123"],
+      "port": 8765,
+      "url": "http://localhost:8765"
+    }
+  ]
+}
