@@ -126,6 +126,8 @@ class Service:
                     or p.name.startswith(("run", "discovery")):
                 continue
             group = rel.parts[0] if len(rel.parts) == 2 else "(top level)"
+            if group.startswith("gate_a_") or (p.suffix == ".md" and p.with_suffix(".json").is_file()):
+                continue                                    # older review runs, and a .md that duplicates its own .json
             label = re.sub(r"^\d+_", "", p.stem).replace("__", "/")
             out.append({"path": rel.as_posix(), "group": group, "label": label, "kind": p.suffix[1:], "kb": round(p.stat().st_size / 1024)})
         return out
