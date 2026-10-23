@@ -24,8 +24,8 @@ RL.loadStatus = async function () {
   try {
     const s = await RL.api("/api/status");
     RL.clear(box);
-    s.providers.forEach((p) => box.appendChild(RL.badge(`${p.name} ${p.configured ? "✓" : "✗"}`, p.configured ? "good" : "")));
-    box.appendChild(RL.badge(s.github_token ? "GitHub token ✓" : "GitHub: no token (low rate limit)", s.github_token ? "good" : "warn"));
+    s.providers.forEach((p) => box.appendChild(RL.badge(`${p.name}: ${p.configured ? "key set" : "no key"}`, p.configured ? "good" : "")));
+    box.appendChild(RL.badge(s.github_token ? "GitHub token set" : "GitHub: no token (low rate limit)", s.github_token ? "good" : "warn"));
     if (!s.can_narrate) box.appendChild(RL.badge("no model keys: facts only", "warn"));
   } catch (e) { RL.clear(box).appendChild(RL.badge("server unreachable", "bad")); }
 };

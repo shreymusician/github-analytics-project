@@ -21,13 +21,13 @@ RL.loadProject = async function () {
     root.appendChild(h("div", { class: "big-pcts" },
       h("div", { class: "card" }, h("b", {}, rm.overall.core + "%"), h("div", {}, "of the core product (V0–V4)")),
       h("div", { class: "card" }, h("b", {}, rm.overall.full + "%"), h("div", {}, "of the full roadmap (V0–V6)"))));
-    const sym = { done: "✅", partial: "🟡", todo: "⬜" };
+    const sym = { done: "[x]", partial: "[~]", todo: "[ ]" };
     root.appendChild(h("div", { class: "card" }, h("h3", {}, "Roadmap progress"),
       h("p", { class: "muted small" }, "Percentages come from a weighted checklist (done = 1, partial = ½, todo = 0; harder items weigh more). Click a version to see its checklist. Updated " + (rm.updated || "?") + "."),
       rm.versions.map((v) => h("details", { class: "rm" },
         h("summary", {}, h("span", {}, h("b", {}, v.id), " ", v.name), RL.bar(v.percent, 100, RL.kindOfScore(v.percent)), h("b", {}, v.percent + "%")),
         h("p", { class: "muted small" }, v.goal),
-        h("ul", {}, v.items.map((i) => h("li", {}, sym[i.s] || "•", h("span", {}, i.t, i.note ? h("span", { class: "muted small" }, " — " + i.note) : null))))))));
+        h("ul", {}, v.items.map((i) => h("li", {}, h("span", { class: "st" }, sym[i.s] || "[?]"), h("span", {}, i.t, i.note ? h("span", { class: "muted small" }, " — " + i.note) : null))))))));
   }
 
   // pipeline

@@ -55,7 +55,7 @@ RL.repoCard = function (c, rank, goal) {
     h("h3", {}, h("span", { class: "rank" }, rank), c.full_name,
       c.archived ? RL.badge("archived", "warn") : null, c.collection ? RL.badge("collection of projects", "warn") : null, c.weak ? RL.badge("weak match", "bad") : null),
     c.description ? h("p", {}, c.description) : null,
-    h("div", { class: "meta" }, h("span", {}, `⭐ ${RL.num(c.stars)}`), h("span", {}, `pushed ${(c.pushed_at || "").slice(0, 10)}`), c.language ? h("span", {}, c.language) : null,
+    h("div", { class: "meta" }, h("span", {}, `${RL.num(c.stars)} stars`), h("span", {}, `pushed ${(c.pushed_at || "").slice(0, 10)}`), c.language ? h("span", {}, c.language) : null,
       c.size_mb !== null ? h("span", {}, `${c.size_mb} MB`) : null),
     c.topics && c.topics.length ? h("div", { class: "meta" }, c.topics.slice(0, 8).map((t) => RL.badge(t))) : null,
     c.model_why ? h("div", { class: "quote" }, `Model's view (${c.model_rating}/3): ${c.model_why}`) : null,

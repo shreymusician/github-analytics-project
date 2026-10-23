@@ -20,7 +20,7 @@ RL.yesNo = (v) => (v === true ? "yes" : v === false ? "no" : "unknown");
 
 RL.gauge = function (title, g) {
   const reasons = (g.evidence || []).map((e) =>
-    h("li", {}, h("span", { class: e.ok ? "yes" : "no" }, e.ok === true ? "✔" : e.ok === false ? "✘" : "•"), h("span", {}, e.note), h("small", {}, `${e.weight} pts`)));
+    h("li", {}, h("span", { class: "m " + (e.ok ? "yes" : "no") }, e.ok === true ? "+" : e.ok === false ? "–" : "·"), h("span", {}, e.note), h("small", {}, `${e.weight} pts`)));
   return h("div", { class: "card gauge" }, h("h3", {}, title), h("div", { class: "num" }, `${g.score}`, h("span", { class: "muted small" }, " / 100")),
     RL.bar(g.score, 100, RL.kindOfScore(g.score)), h("ul", { class: "reasons" }, reasons));
 };

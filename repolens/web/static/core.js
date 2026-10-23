@@ -125,8 +125,8 @@ RL.feedback = function (kind, target, extra) {
       RL.toast("Thanks! Saved to data/feedback on this machine.");
     } catch (e) { RL.toast(e.message); }
   };
-  const up = h("button", { type: "button", title: "This was useful", "aria-label": "Useful" }, "👍");
-  const down = h("button", { type: "button", title: "This was not useful", "aria-label": "Not useful" }, "👎");
+  const up = h("button", { type: "button", title: "This was useful", "aria-label": "Useful" }, "Useful");
+  const down = h("button", { type: "button", title: "This was not useful", "aria-label": "Not useful" }, "Not useful");
   up.addEventListener("click", () => send("up", up));
   down.addEventListener("click", () => send("down", down));
   wrap.append(up, " ", down);
