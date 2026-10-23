@@ -59,15 +59,26 @@ class Service:
                 "can_narrate": bool(self.keys), "today": date.today().isoformat()}
 
     # ------------------------------------------------------------------ find
-    def find(self, goal: str, language: str | None, top: int, progress) -> dict:
-        goal = (goal or "").strip()
+    @staticmethod
+    def validate_find(goal, language, top) -> tuple[str, str | None, int]:
+        """Clean and check the finder's inputs (used by the server before queueing, and again by find())."""
+        goal = goal.strip() if isinstance(goal, str) else ""
         if not goal or len(goal) > 300:
             raise BadRequest("Describe what you want to build or learn, in a sentence (up to 300 characters).")
-        top = max(1, min(int(top or 6), 10))
+        if language is not None and not isinstance(language, str):
+            raise BadRequest("That language name looks wrong.")
         language = (language or "").strip().lower() or None
         if language and not re.fullmatch(r"[a-z0-9+#.\- ]{1,30}", language):
             raise BadRequest("That language name looks wrong.")
-        ext = self.ext or External(github_token=os.environ.get("GITHUB_TOKEN"))
+        try:
+            top = max(1, min(int(top or 6), 10))
+        except (TypeError, ValueError):
+            raise BadRequest("How many results? Use a number from 1 to 10.") from None
+        return goal, language, top
+
+    def find(self, goal: str, language: str | None, top: int, progress) -> dict:
+        goal, language, top = self.validate_find(goal, language, top)
+        ext =self.ext or External(github_token=os.environ.get("GITHUB_TOKEN"))
         progress("Turning your goal into search words…")
         queries, how = discover.queries_for_goal(goal, self.router)
         if not queries:
