@@ -42,6 +42,18 @@ def test_job_errors_are_captured_and_never_contain_a_key():
     assert "gsk_abcdef" not in snap["error"] and all("sk-abcdefgh" not in line for line in snap["progress"])
 
 
+def test_a_job_can_only_be_read_by_its_owner_and_active_jobs_are_counted():
+    jm = JobManager()
+    gate = []
+    jid = jm.submit("t", lambda progress: (time.sleep(0.2), {"ok": 1})[1], owner=7)
+    assert jm.active_for(7) == 1 and jm.active_for(8) == 0
+    assert jm.get(jid, owner=8) is None and jm.get(jid, owner=None) is None and jm.get(jid, owner=7) is not None
+    end = time.time() + 5
+    while jm.get(jid, owner=7)["status"] not in ("done", "error") and time.time() < end:
+        time.sleep(0.02)
+    assert jm.active_for(7) == 0 and jm.get(jid, owner=7)["result"] == {"ok": 1}
+
+
 def test_only_a_limited_number_of_jobs_run_at_once_and_old_jobs_are_forgotten():
     jm = JobManager(max_running=1)
     order = []
@@ -67,28 +79,26 @@ def test_only_github_repositories_are_accepted():
             svc.parse_source(bad)
 
 
-def test_status_lists_providers_but_never_a_key(tmp_path):
-    s = Service(tmp_path, env_keys={"groq": "gsk_SECRETSECRETSECRETSECRET"})
-    st = s.status()
-    assert {p["name"]: p["configured"] for p in st["providers"]}["groq"] is True and st["can_narrate"] is True
-    assert "SECRET" not in json.dumps(st)
-    assert Service(tmp_path, env_keys={}).status()["can_narrate"] is False
+def test_status_lists_models_but_no_keys_and_server_keys_are_off_unless_asked(tmp_path, monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "gsk_SECRETSECRETSECRETSECRET")
+    st = Service(tmp_path).status()
+    assert "SECRET" not in json.dumps(st) and "groq" in st["models"]
+    assert Service(tmp_path).fixed_router is None                       # hosted users bring their own keys
+    assert Service(tmp_path, use_server_keys=True).fixed_router is not None
+    assert Service.router_for({}) is None and Service.router_for({"groq": "gsk_abcdefghijkl"}) is not None
 
 
 # ------------------------------------------------------------------ feedback
-def test_feedback_is_validated_and_appended(tmp_path):
-    s = Service(tmp_path, env_keys={})
-    assert s.add_feedback({"kind": "find", "target": "a/b", "rating": "up", "goal": "rag chatbot", "note": "great"})["total"] == 1
-    assert s.add_feedback({"kind": "report", "target": "c/d", "rating": "down"})["total"] == 2
-    rows = [json.loads(l) for l in (tmp_path / "data/feedback/feedback.jsonl").read_text(encoding="utf-8").splitlines()]
-    assert [r["rating"] for r in rows] == ["up", "down"] and rows[0]["goal"] == "rag chatbot"
+def test_feedback_is_validated_and_bounded(tmp_path):
+    s = Service(tmp_path)
+    ok = s.add_feedback({"kind": "find", "target": "a/b", "rating": "up", "goal": "rag chatbot", "note": "great"})
+    assert ok == {"kind": "find", "target": "a/b", "rating": "up", "goal": "rag chatbot", "note": "great"}
     for bad in ({}, {"kind": "x", "target": "a", "rating": "up"}, {"kind": "find", "target": "", "rating": "up"},
                 {"kind": "find", "target": "a", "rating": "meh"}):
         with pytest.raises(BadRequest):
             s.add_feedback(bad)
-    s.add_feedback({"kind": "find", "target": "t" * 999, "rating": "up", "note": "n" * 999})
-    last = json.loads((tmp_path / "data/feedback/feedback.jsonl").read_text(encoding="utf-8").splitlines()[-1])
-    assert len(last["target"]) == 200 and len(last["note"]) == 500                                       # stored text is bounded
+    big = s.add_feedback({"kind": "find", "target": "t" * 999, "rating": "up", "note": "n" * 999})
+    assert len(big["target"]) == 200 and len(big["note"]) == 500         # stored text is bounded
 
 
 # ------------------------------------------------------------------ reports
@@ -100,7 +110,7 @@ def test_reports_are_listed_and_read_only_from_inside_the_reports_folder(tmp_pat
     (tmp_path / "reports/gate_a/summary.json").write_text("[]", encoding="utf-8")
     (tmp_path / "reports/gate_a/run.log").write_text("x", encoding="utf-8")
     (tmp_path / "reports/find/c__d.md").write_text("# report\nhello", encoding="utf-8")
-    s = Service(tmp_path, env_keys={})
+    s = Service(tmp_path)
     listed = {(r["group"], r["label"], r["kind"]) for r in s.reports()}
     assert listed == {("gate_a", "a/b", "json"), ("find", "c/d", "md")}                                  # summary files and logs are not reports
     assert s.report("find/c__d.md") == {"markdown": "# report\nhello"}
@@ -134,7 +144,7 @@ def test_project_info_is_built_from_the_real_files(tmp_path):
         {"id": "V0", "name": "A", "weight": 1, "items": [{"t": "x", "s": "done"}]},
         {"id": "V1", "name": "B", "weight": 3, "items": [{"t": "y", "s": "done", "w": 1}, {"t": "z", "s": "todo", "w": 3}]},
         {"id": "V5", "name": "C", "weight": 4, "items": [{"t": "q", "s": "partial"}]}], "limits": ["l"]}), encoding="utf-8")
-    p = Service(tmp_path, env_keys={}).project()
+    p = Service(tmp_path).project()
     assert p["stats"]["modules"] == 2 and p["stats"]["test_functions"] == 2 and p["stats"]["code_lines"] > 0
     mods = {m["name"]: m for m in p["modules"]}
     assert mods["alpha"]["summary"] == "Does the alpha thing." and mods["stack"]["layer"] == "analyzers"
@@ -149,7 +159,7 @@ def test_project_info_is_built_from_the_real_files(tmp_path):
 def test_find_returns_cards_order_and_progress_and_validates_input():
     ext = FakeExt({"rag chatbot": [cand("a/rag-chatbot", desc="A rag chatbot", stars=900), cand("b/other-rag-chatbot", desc="rag chatbot", stars=500)]})
     ext.last_status = None
-    s = Service(".", ext=ext, router=None, env_keys={})
+    s = Service(".", ext=ext, router=None)
     steps = []
     out = s.find("rag chatbot", "Python", 5, steps.append)
     assert out["language"] == "python" and out["how"] == "keywords" and out["requested"] == 5
@@ -167,7 +177,7 @@ def test_find_returns_cards_order_and_progress_and_validates_input():
 
 
 def test_analyze_rejects_local_paths_and_returns_the_presented_result(repo, monkeypatch):
-    s = Service(".", ext=FakeExt(), router=None, env_keys={})
+    s = Service(".", ext=FakeExt(), router=None)
     with pytest.raises(BadRequest):
         s.analyze(str(repo), lambda m: None)                                                             # a real local folder is still refused
     class NoDb:

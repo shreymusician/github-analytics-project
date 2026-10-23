@@ -46,17 +46,23 @@ def parse_source(s: str) -> str:
 
 
 class Service:
-    def __init__(self, base: Path | str = ".", ext: External | None = None, router=None, env_keys: dict | None = None):
+    def __init__(self, base: Path | str = ".", ext: External | None = None, router=None, use_server_keys: bool = False):
+        """In the hosted version every user brings their own model keys (see `router_for`); the server's own .env keys
+        are used only when `use_server_keys` is on (a private, single-owner install)."""
         self.base = Path(base).resolve()
-        self.keys = keys_from_env() if env_keys is None else env_keys
         self.ext = ext
-        self.router = router if router is not None else (LLMRouter(keys=self.keys, timeout=120) if self.keys else None)
+        self.fixed_router = router if router is not None else (
+            LLMRouter(keys=keys_from_env(), timeout=120) if use_server_keys and keys_from_env() else None)
+
+    @staticmethod
+    def router_for(keys: dict | None):
+        """A model router over one user's own keys, or None (facts-only analysis) when they have none."""
+        return LLMRouter(keys=keys, timeout=120) if keys else None
 
     # ------------------------------------------------------------------ status
     def status(self) -> dict:
         return {"analyzer_version": ANALYZER_VERSION, "github_token": bool(os.environ.get("GITHUB_TOKEN")),
-                "providers": [{"name": n, "model": p.model(), "configured": n in self.keys} for n, p in PROVIDERS.items()],
-                "can_narrate": bool(self.keys), "today": date.today().isoformat()}
+                "models": {n: p.model() for n, p in PROVIDERS.items()}, "today": date.today().isoformat()}
 
     # ------------------------------------------------------------------ find
     @staticmethod
@@ -76,17 +82,18 @@ class Service:
             raise BadRequest("How many results? Use a number from 1 to 10.") from None
         return goal, language, top
 
-    def find(self, goal: str, language: str | None, top: int, progress) -> dict:
+    def find(self, goal: str, language: str | None, top: int, progress, router=None) -> dict:
+        router = router or self.fixed_router
         goal, language, top = self.validate_find(goal, language, top)
-        ext =self.ext or External(github_token=os.environ.get("GITHUB_TOKEN"))
+        ext = self.ext or External(github_token=os.environ.get("GITHUB_TOKEN"))
         progress("Turning your goal into search words…")
-        queries, how = discover.queries_for_goal(goal, self.router)
+        queries, how = discover.queries_for_goal(goal, router)
         if not queries:
             raise BadRequest("Could not turn that goal into search words. Try describing it with more specific terms.")
         progress(f"Searching GitHub with {len(queries)} queries ({how})…")
         cands = discover.gather(ext, queries, today=date.today(), language=language, pause=2.2)
         progress(f"Found {len(cands)} candidates. Checking their dependencies and asking the model to rate them…")
-        ranked = discover.rank(cands, goal, ext=ext, top=top, router=self.router)
+        ranked = discover.rank(cands, goal, ext=ext, top=top, router=router)
         progress("Done.")
         return {"goal": goal, "language": language, "queries": queries, "how": how, "requested": top,
                 "ranked": [self._card(c) for c in ranked],
@@ -103,14 +110,15 @@ class Service:
                 "model_rating": c.get("llm_relevance"), "model_why": c.get("llm_why")}
 
     # ------------------------------------------------------------------ analyze
-    def analyze(self, source: str, progress) -> dict:
+    def analyze(self, source: str, progress, router=None) -> dict:
+        router = router or self.fixed_router
         name = parse_source(source)
         ext = self.ext or External(github_token=os.environ.get("GITHUB_TOKEN"))
         progress(f"Fetching {name} (read-only partial clone; nothing from it is run)…")
         store = Store()                      # one connection per job: sqlite connections cannot be shared across threads
         try:
-            progress("Analyzing the code, history, tests and CI…" + ("" if self.router else " (no model keys: facts only)"))
-            result = run(name, store=store, router=self.router, external=ext, architecture=self.router is not None)
+            progress("Analyzing the code, history, tests and CI…" + ("" if router else " (no model keys: facts only; add yours under Account for the written explanation)"))
+            result = run(name, store=store, router=router, external=ext, architecture=router is not None)
         finally:
             store.close()
         progress("Done.")
@@ -150,13 +158,8 @@ class Service:
         target = str(payload.get("target") or "")[:200]
         if kind not in FEEDBACK_KINDS or rating not in ("up", "down") or not target:
             raise BadRequest("Feedback needs a kind (find or report), a target and a rating (up or down).")
-        row = {"ts": time.strftime("%Y-%m-%dT%H:%M:%S"), "kind": kind, "target": target, "rating": rating,
-               "goal": str(payload.get("goal") or "")[:300], "note": str(payload.get("note") or "")[:500]}
-        path = self.base / "data" / "feedback" / "feedback.jsonl"
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "a", encoding="utf-8") as f:
-            f.write(json.dumps(row, ensure_ascii=False) + "\n")
-        return {"saved": True, "total": sum(1 for _ in open(path, encoding="utf-8"))}
+        return {"kind": kind, "target": target, "rating": rating,
+                "goal": str(payload.get("goal") or "")[:300], "note": str(payload.get("note") or "")[:500]}
 
     # ------------------------------------------------------------------ the project itself
     def project(self) -> dict:

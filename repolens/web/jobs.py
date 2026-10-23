@@ -19,10 +19,15 @@ class JobManager:
         self._lock = threading.Lock()
         self._slots = threading.BoundedSemaphore(max_running)       # at most this many jobs work at once; others wait
 
-    def submit(self, kind: str, fn: Callable[[Callable[[str], None]], dict]) -> str:
-        """Start `fn(progress)` in a thread. `progress(msg)` records a line the page will show. Returns the job id."""
+    def active_for(self, owner) -> int:
+        """How many of this owner's jobs are still queued or running."""
+        return sum(1 for j in list(self._jobs.values()) if j["owner"] == owner and j["status"] in ("queued", "running"))
+
+    def submit(self, kind: str, fn: Callable[[Callable[[str], None]], dict], owner=None) -> str:
+        """Start `fn(progress)` in a thread. `progress(msg)` records a line the page will show. Returns the job id.
+        A job can only be read back by the `owner` that submitted it."""
         job_id = uuid.uuid4().hex[:12]
-        job = {"id": job_id, "kind": kind, "status": "queued", "progress": [], "result": None, "error": None,
+        job = {"id": job_id, "kind": kind, "owner": owner, "status": "queued", "progress": [], "result": None, "error": None,
                "created": time.time(), "finished": None}
         with self._lock:
             self._jobs[job_id] = job
@@ -45,10 +50,11 @@ class JobManager:
             finally:
                 job["finished"] = time.time()
 
-    def get(self, job_id: str, since: int = 0) -> dict | None:
-        """Snapshot for polling: status, progress lines from index `since`, and the result once done."""
+    def get(self, job_id: str, since: int = 0, owner=None) -> dict | None:
+        """Snapshot for polling: status, progress lines from index `since`, and the result once done.
+        Someone else's job looks exactly like a job that does not exist."""
         job = self._jobs.get(job_id)
-        if job is None:
+        if job is None or job["owner"] != owner:
             return None
         lines = job["progress"][since:]
         done = job["status"] in ("done", "error")
