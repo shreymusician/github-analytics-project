@@ -156,6 +156,11 @@ The pipeline combines: (1) lazy analysis, (2) a live discovery agent, (3) depend
 **Trade-offs accepted:** signing up with an email that already exists says so (it is friendlier, and it leaks that the email has an account; login and password reset do not leak it). Login rate limits live in memory. Results are saved per user in SQLite.
 **Honest limits:** tested only on one machine with fake users. Sending email needs SMTP settings; without them links are printed in the console. The Dockerfile and compose file were written but never built (Docker was not running). Cloning arbitrary repositories on a shared server still needs disk, size and time limits. Nobody but the author has used it.
 
+## D30. The interface is designed from the logo
+**Decision:** the logo is a black field with white heavy type ("Git"), an orange rounded block with black type ("Hub") and a white-to-electric-blue script word ("Intel") beside a magnifier. The UI takes its system from that: black and white carry the page; orange is the signature block (primary buttons, numbers, the active tab, always with black type on it); blue marks intelligence (citations, bars, the big figures, one script flourish per page); Poppins (heavy, regular, semibold) echoes the logo's sans and Kaushan Script its script; rounded rectangles come from the Hub block (10px controls, 18px cards). The header is always black so the logo sits on its own background; the page below has dark and light themes.
+**Replaces** the earlier Swiss, DM Mono and Young Serif experiments (their font files were removed). Fonts are self-hosted from Fontsource (SIL Open Font License) because the page's security policy allows no external resources.
+**Honest limits:** looked at in one browser by the author, at desktop width, in both themes; phone width and screen-reader use are untested; the orange-on-black and blue-on-black contrast was chosen by eye, not measured.
+
 ## Open questions
 - Product vs. hackathon/college project? (changes polish and scope)
 - Local tool vs. hosted service? (affects sandbox design and key handling)
