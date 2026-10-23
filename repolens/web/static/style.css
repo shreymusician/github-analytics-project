@@ -267,3 +267,11 @@ b{font-family:var(--font-label);font-size:12px;text-transform:uppercase;letter-s
 h4{font-family:var(--font-label)}
 a{text-decoration-thickness:1.5px}
 .md i{font-style:normal}
+
+/* logo: the artwork has a black background, so it sits on a black plate that reads as part of the header rule */
+.brand{padding-bottom:0}
+.brand img{display:block;height:52px;width:auto;background:#000}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.top-row{padding-top:0;align-items:end}
+.side{padding-bottom:10px}
+@media (max-width:760px){.brand img{height:40px}}

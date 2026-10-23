@@ -25,7 +25,7 @@ from .service import BadRequest, Service, parse_source
 STATIC = Path(__file__).parent / "static"
 MAX_BODY = 20_000
 TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8",
-         ".svg": "image/svg+xml", ".woff2": "font/woff2"}
+         ".svg": "image/svg+xml", ".woff2": "font/woff2", ".png": "image/png"}
 CSP = ("default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
        "font-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'")
 _JOB_PATH = re.compile(r"^/api/jobs/([0-9a-f]{12})$")
