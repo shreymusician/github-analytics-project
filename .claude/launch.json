@@ -4,7 +4,7 @@
     {
       "name": "repolens-web",
       "runtimeExecutable": "C:/Users/HP/AppData/Local/Microsoft/WindowsApps/PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0/python.exe",
-      "runtimeArgs": ["-m", "repolens.web", "--no-open", "--port", "8765", "--token", "devtoken123"],
+      "runtimeArgs": ["-m", "repolens.web", "--no-open", "--port", "8765", "--data-dir", "data"],
       "port": 8765,
       "url": "http://localhost:8765"
     }

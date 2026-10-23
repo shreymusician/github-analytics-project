@@ -1,0 +1,13 @@
+.git
+.env
+.cache
+reports
+data/users.db*
+data/secret.key
+data/feedback
+tests
+scripts
+__pycache__
+*.pyc
+logo.png
+.claude

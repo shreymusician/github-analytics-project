@@ -1,0 +1,25 @@
+# A starting point for running RepoLens for other people. Put it behind an HTTPS reverse proxy (Caddy, nginx,
+# a cloud load balancer): the proxy terminates TLS and forwards to port 8765. See docs/DEPLOY.md.
+services:
+  repolens:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8765:8765"          # only the proxy on this machine can reach it
+    environment:
+      REPOLENS_PUBLIC_URL: "${REPOLENS_PUBLIC_URL:?set the public https address, e.g. https://repolens.example.com}"
+      REPOLENS_TRUST_PROXY: "1"
+      REPOLENS_REQUIRE_VERIFIED: "1"
+      REPOLENS_SECRET_KEY: "${REPOLENS_SECRET_KEY:?generate one, see docs/DEPLOY.md}"
+      GITHUB_TOKEN: "${GITHUB_TOKEN:-}"
+      REPOLENS_SMTP_HOST: "${REPOLENS_SMTP_HOST:-}"
+      REPOLENS_SMTP_PORT: "${REPOLENS_SMTP_PORT:-587}"
+      REPOLENS_SMTP_USER: "${REPOLENS_SMTP_USER:-}"
+      REPOLENS_SMTP_PASSWORD: "${REPOLENS_SMTP_PASSWORD:-}"
+      REPOLENS_MAIL_FROM: "${REPOLENS_MAIL_FROM:-}"
+    volumes:
+      - repolens-data:/data
+      - repolens-cache:/app/.cache
+volumes:
+  repolens-data:
+  repolens-cache:
