@@ -12,18 +12,20 @@
 <header class="top">
   <div class="wrap top-row">
     <div class="brand">
-      <svg viewBox="0 0 64 64" width="30" height="30" aria-hidden="true"><circle cx="28" cy="28" r="18" fill="none" stroke="currentColor" stroke-width="7"/><path d="M42 42l14 14" stroke="currentColor" stroke-width="7" stroke-linecap="round"/></svg>
-      <div><h1>RepoLens</h1><p>Learn from other people's projects</p></div>
+      <svg viewBox="0 0 64 64" width="26" height="26" aria-hidden="true"><circle cx="28" cy="28" r="18" fill="none" stroke="currentColor" stroke-width="9"/><path d="M42 42l14 14" stroke="currentColor" stroke-width="9"/></svg>
+      <h1>RepoLens</h1>
     </div>
-    <div class="chips" id="status-chips" aria-live="polite"></div>
-    <button class="icon-btn" id="theme" type="button" title="Switch light / dark" aria-label="Switch light or dark theme">Theme</button>
+    <nav class="tabs" id="tabs" role="tablist" aria-label="Sections">
+      <button role="tab" data-tab="find" type="button"><span>01</span>Find repos</button>
+      <button role="tab" data-tab="analyze" type="button"><span>02</span>Analyze</button>
+      <button role="tab" data-tab="reports" type="button"><span>03</span>Reports</button>
+      <button role="tab" data-tab="project" type="button"><span>04</span>The project</button>
+    </nav>
+    <div class="side">
+      <div class="chips" id="status-chips" aria-live="polite"></div>
+      <button class="icon-btn" id="theme" type="button" title="Switch light / dark" aria-label="Switch light or dark theme">Theme</button>
+    </div>
   </div>
-  <nav class="wrap tabs" id="tabs" role="tablist" aria-label="Sections">
-    <button role="tab" data-tab="find" type="button">Find repos</button>
-    <button role="tab" data-tab="analyze" type="button">Analyze a repo</button>
-    <button role="tab" data-tab="reports" type="button">Reports</button>
-    <button role="tab" data-tab="project" type="button">The project</button>
-  </nav>
 </header>
 
 <main class="wrap">

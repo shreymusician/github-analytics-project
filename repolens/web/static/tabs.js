@@ -52,8 +52,8 @@ RL.repoCard = function (c, rank, goal) {
   actions.append(deeper, h("a", { href: c.url, target: "_blank", rel: "noopener noreferrer" }, "GitHub ↗"),
     h("span", { style: "margin-left:auto" }, h("span", { class: "muted small" }, "Good pick? "), RL.feedback("find", c.full_name, { goal })));
   return h("div", { class: "card repo" },
-    h("h3", {}, h("span", { class: "rank" }, rank), c.full_name,
-      c.archived ? RL.badge("archived", "warn") : null, c.collection ? RL.badge("collection of projects", "warn") : null, c.weak ? RL.badge("weak match", "bad") : null),
+    h("h3", {}, h("span", { class: "rank" }, String(rank).padStart(2, "0")), h("span", { class: "name" }, c.full_name,
+      c.archived ? RL.badge("archived", "warn") : null, c.collection ? RL.badge("collection of projects", "warn") : null, c.weak ? RL.badge("weak match", "bad") : null)),
     c.description ? h("p", {}, c.description) : null,
     h("div", { class: "meta" }, h("span", {}, `${RL.num(c.stars)} stars`), h("span", {}, `pushed ${(c.pushed_at || "").slice(0, 10)}`), c.language ? h("span", {}, c.language) : null,
       c.size_mb !== null ? h("span", {}, `${c.size_mb} MB`) : null),
