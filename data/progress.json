@@ -162,13 +162,13 @@
       "items": [
         {
           "t": "Local interactive web page (find, analyze, browse reports, explore the project)",
-          "s": "partial",
-          "note": "being built now"
+          "s": "done",
+          "note": "works locally (python -m repolens.web); checked in a browser by the author only"
         },
         {
           "t": "Thumbs up/down feedback saved for calibration",
           "s": "partial",
-          "note": "being built now"
+          "note": "saved to a local file; nothing reads it to calibrate yet"
         },
         {
           "t": "Bring-your-own-key handling for a hosted version",

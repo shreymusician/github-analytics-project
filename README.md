@@ -12,6 +12,14 @@ A GitHub intelligence tool that helps people **learn from other people's project
 - **Scores** for completeness and deployability, each with the reason for every point (heuristic, not yet calibrated).
 - **Read these first**, subsystems, history (abandoned? one person? how it started), and the evidence list behind every citation.
 
+## The web page (easiest way to use it)
+
+```bash
+python -m repolens.web
+```
+
+It prints a link (with a secret token) and opens it. Tabs: **Find repos** for a goal, **Analyze a repo**, **Reports** (the saved ones, with clickable citations that show the evidence), and **The project** (how RepoLens is built: pipeline, code map, roadmap %, decisions, verification results, commits, honest limits). It only listens on this machine and your keys are never sent to the page. See decision D28.
+
 ## Quick start
 
 ```bash
