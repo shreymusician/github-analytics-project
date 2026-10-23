@@ -3,8 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="token" content="__TOKEN__">
-<title>RepoLens</title>
+<title>RepoLens - app</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='28' cy='28' r='18' fill='none' stroke='%236d5efc' stroke-width='7'/%3E%3Cpath d='M42 42l14 14' stroke='%236d5efc' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="/static/style.css">
 </head>
@@ -12,7 +11,7 @@
 <header class="top">
   <div class="wrap top-row">
     <div class="brand">
-      <img src="/static/logo.png" width="900" height="204" alt="GitHub Intel">
+      <a href="/" class="brand-link" aria-label="GitHub Intel home"><img src="/static/logo.png" width="900" height="204" alt="GitHub Intel"></a>
       <h1 class="sr">RepoLens</h1>
     </div>
     <nav class="tabs" id="tabs" role="tablist" aria-label="Sections">
@@ -20,15 +19,18 @@
       <button role="tab" data-tab="analyze" type="button"><span>02</span>Analyze</button>
       <button role="tab" data-tab="reports" type="button"><span>03</span>Reports</button>
       <button role="tab" data-tab="project" type="button"><span>04</span>The project</button>
+      <button role="tab" data-tab="account" type="button"><span>05</span>Account</button>
     </nav>
     <div class="side">
       <div class="chips" id="status-chips" aria-live="polite"></div>
+      <button class="icon-btn" id="logout" type="button">Log out</button>
       <button class="icon-btn" id="theme" type="button" title="Switch light / dark" aria-label="Switch light or dark theme">Theme</button>
     </div>
   </div>
 </header>
 
 <main class="wrap">
+  <div id="banner"></div>
   <section id="tab-find" class="panel" role="tabpanel" hidden>
     <div class="card hero">
       <h2>What do you want to build or learn?</h2>
@@ -72,6 +74,10 @@
   <section id="tab-project" class="panel" role="tabpanel" hidden>
     <div id="project-root"><div class="card empty">Loading the project overview…</div></div>
   </section>
+
+  <section id="tab-account" class="panel" role="tabpanel" hidden>
+    <div id="account-root"><div class="card empty">Loading your account…</div></div>
+  </section>
 </main>
 
 <div id="modal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modal-title">
@@ -81,12 +87,13 @@
 <div id="popover" class="popover" hidden role="tooltip"></div>
 <div id="toasts" class="toasts" aria-live="polite"></div>
 
-<footer class="wrap foot muted">RepoLens runs only on this machine. Your API keys stay in <code>.env</code> and are never sent to this page. Scores are heuristic first guesses; nothing here is a verdict.</footer>
+<footer class="wrap foot muted">Your API keys are stored encrypted and are never sent back to this page. Scores are heuristic first guesses; nothing here is a verdict.</footer>
 
 <script src="/static/core.js"></script>
 <script src="/static/report.js"></script>
 <script src="/static/tabs.js"></script>
 <script src="/static/project.js"></script>
+<script src="/static/account.js"></script>
 <script src="/static/main.js"></script>
 </body>
 </html>

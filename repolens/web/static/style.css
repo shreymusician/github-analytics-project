@@ -275,3 +275,18 @@ a{text-decoration-thickness:1.5px}
 .top-row{padding-top:0;align-items:end}
 .side{padding-bottom:10px}
 @media (max-width:760px){.brand img{height:40px}}
+
+/* ---- shared by the app, the landing page and the sign-in pages ---- */
+.btn,a.btn{display:inline-block;border:2px solid var(--ink);padding:8px 16px;font-family:var(--font-label);font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink);text-decoration:none;background:none;cursor:pointer}
+.btn:hover{background:var(--ink);color:var(--bg)}
+.btn.primary,a.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.brand-link{display:block;line-height:0}
+.note{border-left:6px solid var(--ink);background:var(--code);padding:10px 14px;margin:0 0 var(--gap);font-size:16px}
+.note.good{border-left-color:var(--good)}.note.warn{border-left-color:var(--warn)}.note.bad{border-left-color:var(--accent);background:var(--bad-bg)}
+.note button{margin-left:8px;padding:3px 10px}
+.keyrow{display:grid;grid-template-columns:minmax(200px,1fr) 2fr;gap:12px var(--gap);border-top:1px solid var(--ink);padding:12px 0;align-items:center}
+.keyrow .row input{flex:1 1 220px}
+button.danger{border-color:var(--accent);color:var(--accent)}
+button.danger:hover{background:var(--accent);color:var(--accent-ink)}
+@media (max-width:760px){.keyrow{grid-template-columns:1fr}}

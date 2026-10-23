@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RepoLens - account</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='28' cy='28' r='18' fill='none' stroke='%23d10a0a' stroke-width='7'/%3E%3Cpath d='M42 42l14 14' stroke='%23d10a0a' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/site.css">
+</head>
+<body class="site">
+<header class="top">
+  <div class="wrap top-row">
+    <div class="brand"><a href="/" class="brand-link" aria-label="GitHub Intel home"><img src="/static/logo.png" width="900" height="204" alt="GitHub Intel"></a></div>
+    <div class="side"><a class="btn" href="/">Back to the home page</a></div>
+  </div>
+</header>
+
+<main class="wrap auth">
+  <div class="auth-text">
+    <p class="label kicker" id="auth-kicker"></p>
+    <h1 id="auth-title"></h1>
+    <p class="sub" id="auth-sub"></p>
+  </div>
+  <div>
+    <div id="auth-note" role="status" aria-live="polite"></div>
+    <form id="auth-form" class="stack" novalidate>
+      <label id="email-wrap">Email<input id="email" type="email" autocomplete="email" maxlength="254" required></label>
+      <label id="pw-wrap">Password<span class="pwrow"><input id="password" type="password" maxlength="128" required><button type="button" id="show-pw" aria-pressed="false">Show</button></span></label>
+      <p class="muted small" id="pw-hint" hidden>At least 10 characters. A few random words is a good password.</p>
+      <button class="primary" type="submit" id="auth-go"></button>
+    </form>
+    <p class="small" id="auth-links"></p>
+  </div>
+</main>
+<footer class="wrap foot muted">Your password is stored only as a salted hash. Analyses use public repositories only.</footer>
+<script src="/static/core.js"></script>
+<script src="/static/auth.js"></script>
+</body>
+</html>

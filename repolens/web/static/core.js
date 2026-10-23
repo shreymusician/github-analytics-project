@@ -2,7 +2,7 @@
 /* Shared helpers. Everything is built with DOM calls (never innerHTML), so text from repositories or models
    can never become markup. */
 const RL = {};
-RL.token = (document.querySelector('meta[name="token"]') || {}).content || "";
+RL.csrf = "";          // set from /api/me once the page has loaded; the session cookie itself is HttpOnly
 
 RL.h = function (tag, attrs, ...kids) {
   const el = document.createElement(tag);
@@ -27,16 +27,18 @@ RL.clear = (el) => { while (el.firstChild) el.removeChild(el.firstChild); return
 RL.$ = (id) => document.getElementById(id);
 
 RL.api = async function (path, body) {
-  const opts = { headers: { "X-Token": RL.token } };
+  const opts = { headers: {}, credentials: "same-origin" };
   if (body !== undefined) {
     opts.method = "POST";
     opts.headers["Content-Type"] = "application/json";
+    opts.headers["X-CSRF"] = RL.csrf;
     opts.body = JSON.stringify(body);
   }
   let r;
   try { r = await fetch(path, opts); } catch (e) { throw new Error("Could not reach the RepoLens server. Is it still running?"); }
   let data = null;
   try { data = await r.json(); } catch (e) { /* fall through */ }
+  if (r.status === 401 && !path.startsWith("/api/auth/")) { location.href = "/login"; throw new Error("Please log in."); }
   if (!r.ok) throw new Error((data && data.error) || `Request failed (${r.status}).`);
   return data;
 };
@@ -122,7 +124,7 @@ RL.feedback = function (kind, target, extra) {
       await RL.api("/api/feedback", Object.assign({ kind, target, rating }, extra || {}));
       wrap.querySelectorAll("button").forEach((b) => { b.classList.remove("on"); b.disabled = true; });
       btn.classList.add("on");
-      RL.toast("Thanks! Saved to data/feedback on this machine.");
+      RL.toast("Thanks, saved.");
     } catch (e) { RL.toast(e.message); }
   };
   const up = h("button", { type: "button", title: "This was useful", "aria-label": "Useful" }, "Useful");

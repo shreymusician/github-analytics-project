@@ -11,6 +11,7 @@ RL.chips = function (box, items, fn) {
 /* ------------------------------------------------------------------ Find */
 RL.initFind = function () {
   const form = RL.$("find-form"), go = RL.$("find-go");
+  try { const g = sessionStorage.getItem("rl_goal"); if (g) { RL.$("goal").value = g.slice(0, 300); sessionStorage.removeItem("rl_goal"); } } catch (e) { /* storage may be blocked */ }
   RL.chips(RL.$("examples"), EXAMPLE_GOALS, (t) => { RL.$("goal").value = t; form.requestSubmit(); });
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -20,6 +21,7 @@ RL.initFind = function () {
     RL.clear(RL.$("find-results"));
     try {
       const res = await RL.runJob("/api/find", { goal, language: RL.$("lang").value || null, top: Number(RL.$("top").value) }, RL.$("find-progress"));
+      RL.reportList = null;                 // the history has a new entry
       RL.showFind(res);
     } catch (err) {
       RL.$("find-results").appendChild(h("div", { class: "errbox" }, err.message));
@@ -27,8 +29,8 @@ RL.initFind = function () {
   });
 };
 
-RL.showFind = function (res) {
-  const box = RL.clear(RL.$("find-results"));
+RL.showFind = function (res, into) {
+  const box = RL.clear(into || RL.$("find-results"));
   box.appendChild(h("div", { class: "card" },
     h("h3", {}, `Top ${res.ranked.length} for “${res.goal}”`),
     h("p", { class: "muted small" }, "Search words (", res.how, "): ", res.queries.map((q) => h("code", {}, q)).flatMap((c) => [c, " "]), res.language ? ` · language: ${res.language}` : ""),
@@ -82,6 +84,7 @@ RL.initAnalyze = function () {
     RL.clear(RL.$("analyze-result"));
     try {
       const res = await RL.runJob("/api/analyze", { source }, RL.$("analyze-progress"));
+      RL.reportList = null;
       RL.$("analyze-result").appendChild(RL.renderReport(res));
     } catch (err) {
       RL.$("analyze-result").appendChild(h("div", { class: "errbox" }, err.message));
@@ -107,7 +110,7 @@ RL.drawReportList = function () {
   if (!items.length) { box.textContent = RL.reportList && RL.reportList.length ? "Nothing matches." : "No saved reports yet. Analyze a repo first."; return; }
   const groups = {};
   items.forEach((r) => (groups[r.group] = groups[r.group] || []).push(r));
-  Object.keys(groups).sort().forEach((g) => {
+  Object.keys(groups).sort((a, b) => (a === "Your history" ? -1 : b === "Your history" ? 1 : a < b ? -1 : 1)).forEach((g) => {
     box.appendChild(h("h4", {}, g));
     groups[g].forEach((r) => {
       const b = h("button", { type: "button", "aria-current": RL.currentReport === r.path ? "true" : "false" }, r.label, " ", h("span", { class: "muted small" }, r.kind));
@@ -122,8 +125,11 @@ RL.openReport = async function (r) {
   const view = RL.clear(RL.$("report-view"));
   view.appendChild(h("div", { class: "card" }, h("span", { class: "spinner" }), " Loading…"));
   try {
-    const d = await RL.api("/api/report?path=" + encodeURIComponent(r.path));
+    const mine = r.path.startsWith("mine:");
+    const d = await RL.api(mine ? "/api/mine/" + r.path.slice(5) : "/api/report?path=" + encodeURIComponent(r.path));
     RL.clear(view);
+    if (mine && d.kind === "find") { RL.showFind(d.result, view); return; }
+    if (mine) { view.appendChild(RL.renderReport(d.result)); return; }
     view.appendChild(d.profile ? RL.renderReport(d) : h("div", { class: "card md" }, RL.markdown(d.markdown || "")));
   } catch (e) { RL.clear(view).appendChild(h("div", { class: "errbox" }, e.message)); }
 };

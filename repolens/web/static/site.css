@@ -1,0 +1,49 @@
+/* Landing and sign-in pages (the app's own styles live in style.css). */
+.site .top-row{align-items:center}
+.site .top{position:static}
+.navlink{border-bottom:4px solid transparent;padding:10px 14px 8px;font:500 12px var(--font-label);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-decoration:none;white-space:nowrap;margin-bottom:-4px}
+.navlink span{color:var(--accent);margin-right:6px}
+.navlink:hover{color:var(--ink);border-bottom-color:var(--accent)}
+.kicker{color:var(--accent);margin:0 0 14px}
+.label{font-family:var(--font-label);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+.lead{display:grid;grid-template-columns:7fr 5fr;gap:56px;padding-top:56px;padding-bottom:56px;align-items:start}
+.lead h2{font-size:56px;line-height:1.02;letter-spacing:-.02em;margin-bottom:22px}
+.lead .sub{font-size:18px;max-width:34em}
+.lead form{margin:26px 0 12px}
+.specimen{border-top:4px solid var(--accent);padding-top:14px}
+.specimen h3{font-size:24px;margin:6px 0 4px}
+.specimen dl{margin:14px 0}
+.specimen dl div{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--ink);padding:6px 0}
+.specimen dt{font:500 12px var(--font-label);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);align-self:center}
+.specimen dd{margin:0;text-align:right}
+.chip-demo{display:inline-block;border:1.5px solid var(--ink);font:500 11px var(--font-label);padding:0 4px}
+.block{border-top:4px solid var(--ink);padding-top:14px;padding-bottom:44px;position:relative}
+.block .num{position:absolute;top:14px;left:20px;color:var(--accent);margin:0}
+.cols{display:grid;grid-template-columns:4fr 8fr;gap:var(--gap);padding-top:34px}
+.cols h3{font-size:36px;line-height:1.05}
+.rules{list-style:none;margin:0;padding:0;counter-reset:r}
+.rules li{border-top:1px solid var(--ink);padding:12px 0;max-width:62ch}
+.rules li:first-child{border-top:0;padding-top:0}
+.rules b{font-family:var(--font-body);font-size:18px;text-transform:none;letter-spacing:0;display:block}
+.figures{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap);margin-bottom:18px}
+.figures b{display:block;font:400 56px/1 var(--font-body);color:var(--accent);text-transform:none;letter-spacing:-.02em;margin-bottom:8px}
+.figures span{display:block;max-width:30ch;line-height:1.5}
+.cta{border-top:4px solid var(--accent);padding-top:22px;padding-bottom:56px}
+.cta h3{font-size:36px;max-width:16em}
+.auth{display:grid;grid-template-columns:5fr 6fr;gap:56px;padding-top:56px;padding-bottom:64px;min-height:60vh}
+.auth h1{font-size:56px;line-height:1.02;letter-spacing:-.02em;margin-bottom:16px;position:static;width:auto;height:auto;clip:auto;overflow:visible;white-space:normal}
+.auth .sub{max-width:28em}
+.stack{display:grid;gap:18px;max-width:420px}
+.stack label{display:grid;gap:6px;font:500 12px var(--font-label);text-transform:uppercase;letter-spacing:.08em}
+.stack input{font-family:var(--font-body);text-transform:none;letter-spacing:0;font-size:18px;width:100%}
+.pwrow{display:flex;gap:8px}
+.pwrow button{white-space:nowrap}
+#auth-links{margin-top:18px;font-size:16px}
+@media (max-width:900px){
+  .lead,.auth,.cols,.figures{grid-template-columns:1fr}
+  .lead{gap:32px;padding-top:32px}
+  .lead h2,.auth h1{font-size:36px}
+  .block .num{position:static}
+  .cols{padding-top:10px}
+  .site .tabs{display:none}
+}

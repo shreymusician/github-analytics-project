@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RepoLens - learn from other people's code</title>
+<meta name="description" content="Find GitHub projects worth studying and understand any repository: what it is, how it works, whether it is alive, tested and runnable, and which files to read first. Every claim cites its evidence.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='28' cy='28' r='18' fill='none' stroke='%23d10a0a' stroke-width='7'/%3E%3Cpath d='M42 42l14 14' stroke='%23d10a0a' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/site.css">
+</head>
+<body class="site">
+<header class="top">
+  <div class="wrap top-row">
+    <div class="brand"><a href="/" class="brand-link" aria-label="GitHub Intel home"><img src="/static/logo.png" width="900" height="204" alt="GitHub Intel"></a><h1 class="sr">RepoLens</h1></div>
+    <nav class="tabs" aria-label="Page sections">
+      <a class="navlink" href="#get"><span>01</span>What you get</a>
+      <a class="navlink" href="#how"><span>02</span>How it works</a>
+      <a class="navlink" href="#proof"><span>03</span>Evidence</a>
+      <a class="navlink" href="#limits"><span>05</span>Limits</a>
+    </nav>
+    <div class="side" id="nav-actions">
+      <a class="btn" href="/login" id="nav-login">Log in</a>
+      <a class="btn primary" href="/signup" id="nav-signup">Sign up</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="wrap lead">
+    <div class="lead-text">
+      <p class="label kicker">For people who learn by reading real projects</p>
+      <h2>Understand any GitHub project in minutes, with receipts.</h2>
+      <p class="sub">Tell RepoLens what you want to build. It finds projects worth studying, then shows what each one really is, how it works, whether it is alive, tested and runnable, and which files to read first. Every statement points at the evidence behind it.</p>
+      <form id="start-form" class="row" autocomplete="off">
+        <input id="start-goal" type="text" maxlength="300" placeholder="e.g. a RAG chatbot over my documents" aria-label="What do you want to build or learn?" required>
+        <button class="primary" type="submit">Start free</button>
+      </form>
+      <p class="muted small">Free to use. You bring your own model API keys, or use it without any and still get every computed fact.</p>
+    </div>
+    <aside class="specimen" aria-label="A sample of a real report">
+      <div class="label">Sample, from a real report</div>
+      <h3>Cinnamon/kotaemon</h3>
+      <p class="small muted">An open-source RAG chatbot UI that lets you chat with your documents.</p>
+      <dl>
+        <div><dt>Maintenance</dt><dd>stale, last commit 2026-05-30</dd></div>
+        <div><dt>Tests</dt><dd>yes, 28 files</dd></div>
+        <div><dt>CI</dt><dd>GitHub Actions</dd></div>
+        <div><dt>Docker</dt><dd>yes</dd></div>
+        <div><dt>License</dt><dd>Apache-2.0</dd></div>
+        <div><dt>Completeness</dt><dd>90 / 100</dd></div>
+        <div><dt>Runnable</dt><dd>100 / 100</dd></div>
+      </dl>
+      <p class="small">Each line in a real report carries a citation chip like <span class="chip-demo">E12</span> that opens the exact fact or source excerpt it came from.</p>
+    </aside>
+  </section>
+
+  <section class="wrap block" id="get">
+    <p class="label num">01</p>
+    <div class="cols">
+      <h3>What you get</h3>
+      <ol class="rules">
+        <li><b>What it really is.</b> A plain summary and scope, not the marketing README.</li>
+        <li><b>How it works.</b> A step-by-step walkthrough and the key parts, each linked to the code it came from.</li>
+        <li><b>Is it alive, tested, runnable?</b> History, contributors, tests, CI, Docker and licence, measured rather than guessed, with scores that show their reasons.</li>
+        <li><b>What to read first.</b> The files the rest of the project depends on, ranked from the import graph.</li>
+        <li><b>Projects worth studying.</b> Describe a goal and get a ranked list with the score broken into its parts, so you can disagree with it.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="wrap block" id="how">
+    <p class="label num">02</p>
+    <div class="cols">
+      <h3>How it works</h3>
+      <ol class="rules">
+        <li><b>Our own algorithms read the project.</b> Stack, import graph, git history, tests and CI are computed by code. Repository code is only read, never run.</li>
+        <li><b>Facts become numbered evidence.</b> Secrets are scrubbed, and text from the repository is fenced as untrusted data.</li>
+        <li><b>A model only puts words to the facts.</b> It uses your own keys, with automatic failover between providers.</li>
+        <li><b>Every sentence must cite evidence.</b> Names, files and numbers have to exist in it, or the sentence is dropped before you see it.</li>
+        <li><b>Another model checks the work.</b> A different provider audits the claims, and the facts are cross-checked against GitHub.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="wrap block" id="proof">
+    <p class="label num">03</p>
+    <div class="cols">
+      <h3>Evidence it works</h3>
+      <div>
+        <div class="figures">
+          <div><b>206 / 216</b><span class="label">claims supported by their evidence when a second model checked ten real reports (10 partly supported, none unsupported)</span></div>
+          <div><b>99% vs 37%</b><span class="label">of factual questions answered correctly from the report, against the README alone</span></div>
+        </div>
+        <p class="small muted">Read these with care. The checks were run by the author on ten AI and ML repositories, and the second model is still a model. The questions asked target facts a report is built to surface, which favours the report. Nobody outside the project has measured it yet, and you can help by rating results with the buttons in the app.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap block" id="keys">
+    <p class="label num">04</p>
+    <div class="cols">
+      <h3>Your keys, your cost</h3>
+      <div>
+        <p>Explanations are written by the model providers you choose (Groq, Google Gemini, OpenRouter, all with free tiers). You paste your own keys once; they are stored encrypted and used only for your own jobs, and they are never shown again. If one provider is rate limited, RepoLens switches to the next.</p>
+        <p>No keys? You still get the computed facts: stack, history, tests, CI, scores and the files to read first.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap block" id="limits">
+    <p class="label num">05</p>
+    <div class="cols">
+      <h3>Honest limits</h3>
+      <ul class="rules">
+        <li>Scores and ranking weights are first guesses, not calibrated against real opinions yet.</li>
+        <li>Tested mainly on AI and ML projects. Other kinds of projects are unproven.</li>
+        <li>It reads code; it does not run it, so "runnable" means "looks runnable".</li>
+        <li>Start-reading picks can favour central helper files over the best starting point.</li>
+        <li>Daily limits apply while it is young: 20 searches and 10 analyses per person per day.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="wrap cta">
+    <h3>Try it on a project you are curious about.</h3>
+    <div class="row"><a class="btn primary" href="/signup">Create a free account</a><a class="btn" href="/login">Log in</a></div>
+  </section>
+</main>
+<footer class="wrap foot muted">RepoLens, also shown as GitHub Intel. Not affiliated with GitHub. Analyses use public repositories only.</footer>
+<script src="/static/core.js"></script>
+<script src="/static/landing.js"></script>
+</body>
+</html>
